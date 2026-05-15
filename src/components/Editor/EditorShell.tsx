@@ -39,15 +39,17 @@ export default function EditorShell() {
   }, []);
 
   return (
-    <div className="flex flex-col h-full bg-[var(--color-bg-canvas)]">
+    <div className="flex flex-col" style={{ flex: 1, minHeight: 0, background: "var(--color-bg-canvas)" }}>
       <Toolbar />
       <ProBanner />
-      <div className="flex flex-1 min-h-0">
+
+      <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
         <Sidebar />
         <LeftPanel />
         <Canvas />
         <RightPanel />
       </div>
+
       <StatusBar />
       <button
         className="fixed bottom-10 right-4 z-50 flex items-center gap-1.5 px-3 py-2 rounded-md border border-dashed border-[var(--color-accent)] bg-[var(--color-bg-toolbar)] text-[var(--color-accent)] text-xs hover:bg-[var(--color-accent)] hover:text-white transition-all shadow-lg"
