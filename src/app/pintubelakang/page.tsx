@@ -1,53 +1,140 @@
 "use client";
 
-import { useState } from "react";
+/* eslint-disable @next/next/no-img-element */
+
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { getLibrary, addToLibrary, removeFromLibrary, exportLibraryJson, importLibraryJson } from "@/lib/library";
 import { sanitizeSvg, isValidSvg } from "@/lib/svg-sanitizer";
 import type { LibraryShape } from "@/types";
-import { Upload, X, Download, UploadIcon, Plus, Lock, ArrowLeft } from "lucide-react";
+import {
+  Lock, ShieldCheck, Shapes, Settings, LayoutDashboard, Upload, X, Download,
+  UploadIcon, Plus, ArrowLeft, LogOut, Save, Trash2, Eye, EyeOff,
+} from "lucide-react";
 import Link from "next/link";
 
-const ADMIN_PASSWORD = "ipsum2025";
+/* =========== localStorage helpers =========== */
+
+const STORAGE_KEY = "ipsumlogo_admin";
+const DEFAULT_PASSWORD = "ipsum2025";
+const DEFAULT_OTP = "123456";
+
+interface AdminProfile {
+  name: string;
+  email: string;
+  adminId: string;
+  password: string;
+  otpCode: string;
+  logoUrl: string;
+}
+
+function getAdminProfile(): AdminProfile {
+  if (typeof window === "undefined") return { name: "Admin", email: "", adminId: "ADM-001", password: DEFAULT_PASSWORD, otpCode: DEFAULT_OTP, logoUrl: "" };
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    try { return { ...getDefaultProfile(), ...JSON.parse(raw) }; } catch { /* ignore */ }
+  }
+  return getDefaultProfile();
+}
+
+function getDefaultProfile(): AdminProfile {
+  return { name: "Admin", email: "", adminId: "ADM-001", password: DEFAULT_PASSWORD, otpCode: DEFAULT_OTP, logoUrl: "" };
+}
+
+function saveAdminProfile(profile: AdminProfile) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+}
+
+/* =========== Main Page =========== */
+
+type AuthStep = "password" | "otp" | "done";
+type AdminTab = "dashboard" | "shapes" | "settings" | "security";
+
 const CATEGORIES = ["All", "Geometric", "Arrows", "Nature", "Symbols", "Abstract"];
 
 export default function AdminPage() {
-  const [authenticated, setAuthenticated] = useState(false);
+  const [step, setStep] = useState<AuthStep>("password");
   const [password, setPassword] = useState("");
-  const [authError, setAuthError] = useState("");
+  const [otpInput, setOtpInput] = useState("");
+  const [error, setError] = useState("");
+  const [profile, setProfile] = useState<AdminProfile>(() => {
+    if (typeof window === "undefined") return getDefaultProfile();
+    return getAdminProfile();
+  });
 
-  if (!authenticated) {
+  const handlePasswordSubmit = () => {
+    const p = getAdminProfile();
+    if (password === p.password) {
+      setStep("otp");
+      setError("");
+    } else {
+      setError("Incorrect password");
+    }
+  };
+
+  const handleOtpSubmit = () => {
+    const p = getAdminProfile();
+    if (otpInput === p.otpCode) {
+      setStep("done");
+      setError("");
+    } else {
+      setError("Incorrect verification code");
+    }
+  };
+
+  const handleLogout = () => {
+    setStep("password");
+    setPassword("");
+    setOtpInput("");
+    setError("");
+  };
+
+  if (step !== "done") {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[var(--color-bg-canvas)]">
-        <div className="w-[360px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg overflow-hidden shadow-2xl">
-          <div className="px-4 py-3 border-b border-[var(--color-border)]">
-            <h2 className="font-semibold text-[15px] flex items-center gap-2 text-[var(--color-text-primary)]">
-              <Lock size={16} className="text-[var(--color-accent)]" /> Admin Access
+        <div className="w-[380px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg overflow-hidden shadow-2xl">
+          <div className="px-4 py-3 border-b border-[var(--color-border)] flex items-center gap-2">
+            {profile.logoUrl ? (
+              <img src={profile.logoUrl} alt="Logo" className="w-6 h-6 rounded object-contain" />
+            ) : (
+              <div className="w-6 h-6 bg-gradient-to-br from-[var(--color-accent)] to-purple-500 rounded-md flex items-center justify-center text-[10px] text-white font-bold">?</div>
+            )}
+            <h2 className="font-semibold text-[15px] text-[var(--color-text-primary)]">
+              {step === "password" ? "Admin Login" : "Verification Code"}
             </h2>
           </div>
+
           <div className="p-4 flex flex-col gap-3">
-            <p className="text-sm text-[var(--color-text-secondary)]">Enter password to manage shape library.</p>
+            <p className="text-sm text-[var(--color-text-secondary)]">
+              {step === "password"
+                ? "Enter your admin password."
+                : "Enter the OTP verification code sent to your WhatsApp."}
+            </p>
+
             <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  if (password === ADMIN_PASSWORD) { setAuthenticated(true); setAuthError(""); }
-                  else setAuthError("Incorrect password");
-                }
-              }}
-              className="w-full h-9"
+              type={step === "password" ? "password" : "text"}
+              placeholder={step === "password" ? "Password" : "6-digit code"}
+              value={step === "password" ? password : otpInput}
+              onChange={(e) => { if (step === "password") setPassword(e.target.value); else setOtpInput(e.target.value); }}
+              onKeyDown={(e) => { if (e.key === "Enter") { if (step === "password") handlePasswordSubmit(); else handleOtpSubmit(); } }}
+              className="w-full h-10 text-base tracking-widest text-center"
+              maxLength={step === "password" ? 30 : 6}
             />
-            {authError && <p className="text-xs text-[var(--color-danger)]">{authError}</p>}
-            <Button variant="primary" className="w-full" onClick={() => {
-              if (password === ADMIN_PASSWORD) { setAuthenticated(true); setAuthError(""); }
-              else setAuthError("Incorrect password");
-            }}>
-              <Lock size={14} /> Login
+
+            {error && <p className="text-xs text-[var(--color-danger)] text-center">{error}</p>}
+
+            <Button variant="primary" className="w-full h-10" onClick={step === "password" ? handlePasswordSubmit : handleOtpSubmit}>
+              <Lock size={14} /> {step === "password" ? "Next" : "Verify & Login"}
             </Button>
+
+            {step === "otp" && (
+              <button className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-accent)] text-center bg-transparent border-none cursor-pointer transition-colors"
+                onClick={() => { setStep("password"); setError(""); setOtpInput(""); }}>
+                ← Back to password
+              </button>
+            )}
+
             <Link href="/" className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-accent)] text-center transition-colors">
               ← Back to editor
             </Link>
@@ -57,40 +144,137 @@ export default function AdminPage() {
     );
   }
 
-  return <LibraryManager />;
+  return <AdminDashboard profile={profile} onLogout={handleLogout} onProfileChange={setProfile} />;
 }
 
-function LibraryManager() {
+/* =========== Dashboard =========== */
+
+function AdminDashboard({
+  profile, onLogout, onProfileChange,
+}: { profile: AdminProfile; onLogout: () => void; onProfileChange: (p: AdminProfile) => void }) {
+  const [tab, setTab] = useState<AdminTab>("dashboard");
   const [shapes, setShapes] = useState<LibraryShape[]>(() => getLibrary());
+
+  const refreshShapes = useCallback(() => setShapes(getLibrary()), []);
+
+  const tabs: Array<{ id: AdminTab; icon: React.ReactNode; label: string }> = [
+    { id: "dashboard", icon: <LayoutDashboard size={14} />, label: "Dashboard" },
+    { id: "shapes", icon: <Shapes size={14} />, label: "Shapes" },
+    { id: "settings", icon: <Settings size={14} />, label: "Settings" },
+    { id: "security", icon: <ShieldCheck size={14} />, label: "Security" },
+  ];
+
+  return (
+    <div className="min-h-screen bg-[var(--color-bg-canvas)]">
+      <header className="flex items-center justify-between h-12 bg-[var(--color-bg-toolbar)] border-b border-[var(--color-border)] px-3">
+        <div className="flex items-center gap-3">
+          <Link href="/" className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors">
+            <ArrowLeft size={16} />
+          </Link>
+          {profile.logoUrl ? (
+            <img src={profile.logoUrl} alt="Logo" className="w-6 h-6 rounded object-contain" />
+          ) : (
+            <div className="w-6 h-6 bg-gradient-to-br from-[var(--color-accent)] to-purple-500 rounded-md flex items-center justify-center text-[10px] text-white font-bold">?</div>
+          )}
+          <h1 className="font-bold text-[15px] tracking-[-0.3px] text-[var(--color-text-primary)]">Ipsumlogo Admin</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-[var(--color-text-muted)]">{profile.name}</span>
+          <button onClick={onLogout} className="text-[var(--color-text-muted)] hover:text-[var(--color-danger)] transition-colors p-1" title="Logout">
+            <LogOut size={14} />
+          </button>
+        </div>
+      </header>
+
+      <div style={{ display: "flex", height: "calc(100vh - 48px)" }}>
+        <nav className="w-[180px] bg-[var(--color-bg-sidebar)] border-r border-[var(--color-border)] p-2 flex flex-col gap-1">
+          {tabs.map(({ id, icon, label }) => (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              className={`flex items-center gap-2 px-3 py-2 rounded text-xs transition-all text-left ${
+                tab === id
+                  ? "bg-[var(--color-accent-bg)] text-[var(--color-accent)] font-medium"
+                  : "text-[var(--color-text-secondary)] hover:bg-white/5 hover:text-[var(--color-text-primary)]"
+              }`}
+            >
+              {icon} {label}
+            </button>
+          ))}
+        </nav>
+
+        <main className="flex-1 overflow-y-auto">
+          {tab === "dashboard" && <DashboardTab shapes={shapes} profile={profile} />}
+          {tab === "shapes" && <ShapesTab shapes={shapes} refresh={refreshShapes} />}
+          {tab === "settings" && <SettingsTab profile={profile} onChange={onProfileChange} />}
+          {tab === "security" && <SecurityTab profile={profile} onChange={onProfileChange} />}
+        </main>
+      </div>
+    </div>
+  );
+}
+
+/* =========== Dashboard Tab =========== */
+
+function DashboardTab({ shapes, profile }: { shapes: LibraryShape[]; profile: AdminProfile }) {
+  const categoryCount = new Set(shapes.map((s) => s.category)).size;
+  const totalBytes = new Blob([JSON.stringify(shapes)]).size;
+  return (
+    <div className="p-6">
+      <h2 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">Overview</h2>
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <StatCard label="Total Shapes" value={shapes.length} color="var(--color-accent)" />
+        <StatCard label="Categories" value={categoryCount} color="var(--color-success)" />
+        <StatCard label="Storage Used" value={`${(totalBytes / 1024).toFixed(1)} KB`} color="#f59e0b" />
+      </div>
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-4">
+        <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] mb-3 uppercase tracking-[0.5px]">Admin Profile</h3>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div><span className="text-[var(--color-text-muted)]">Name:</span> <span className="text-[var(--color-text-primary)]">{profile.name}</span></div>
+          <div><span className="text-[var(--color-text-muted)]">ID:</span> <span className="text-[var(--color-text-primary)]">{profile.adminId}</span></div>
+          <div><span className="text-[var(--color-text-muted)]">Email:</span> <span className="text-[var(--color-text-primary)]">{profile.email || "—"}</span></div>
+          <div><span className="text-[var(--color-text-muted)]">OTP:</span> <span className="text-[var(--color-text-primary)]">{profile.otpCode ? "Enabled" : "Disabled"}</span></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ label, value, color }: { label: string; value: string | number; color: string }) {
+  return (
+    <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-4">
+      <p className="text-[11px] text-[var(--color-text-muted)] uppercase tracking-[0.5px] mb-1">{label}</p>
+      <p className="text-2xl font-bold" style={{ color }}>{value}</p>
+    </div>
+  );
+}
+
+/* =========== Shapes Tab =========== */
+
+function ShapesTab({ shapes, refresh }: { shapes: LibraryShape[]; refresh: () => void }) {
   const [activeCategory, setActiveCategory] = useState("All");
   const [shapeName, setShapeName] = useState("");
   const [svgPaste, setSvgPaste] = useState("");
   const [category, setCategory] = useState("Geometric");
   const [error, setError] = useState("");
 
-  const refresh = () => setShapes(getLibrary());
-
   const handleAdd = () => {
     setError("");
     const name = shapeName.trim() || "Unnamed Shape";
     let svgContent = svgPaste.trim();
     if (!svgContent) { setError("Please paste or upload SVG code"); return; }
-    if (!isValidSvg(svgContent)) { setError("Invalid or unsafe SVG detected"); return; }
+    if (!isValidSvg(svgContent)) { setError("Invalid or unsafe SVG"); return; }
     svgContent = sanitizeSvg(svgContent);
     addToLibrary({ name, category, svgContent });
-    setShapeName(""); setSvgPaste("");
-    refresh();
+    setShapeName(""); setSvgPaste(""); refresh();
   };
-
-  const handleRemove = (id: string) => { removeFromLibrary(id); refresh(); };
 
   const handleExport = () => {
     const json = exportLibraryJson();
     const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = "ipsumlogo-library.json"; a.click();
-    URL.revokeObjectURL(url);
+    a.href = URL.createObjectURL(blob); a.download = "ipsumlogo-library.json"; a.click();
+    URL.revokeObjectURL(a.href);
   };
 
   const handleImport = () => {
@@ -125,87 +309,214 @@ function LibraryManager() {
   const filtered = activeCategory === "All" ? shapes : shapes.filter((s) => s.category === activeCategory);
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg-canvas)]">
-      <header className="flex items-center justify-between h-12 bg-[var(--color-bg-toolbar)] border-b border-[var(--color-border)] px-3">
-        <div className="flex items-center gap-3">
-          <Link href="/" className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors">
-            <ArrowLeft size={16} />
-          </Link>
-          <h1 className="font-bold text-[15px] tracking-[-0.3px] text-[var(--color-text-primary)]">Shape Library Admin</h1>
+    <div className="flex" style={{ height: "100%" }}>
+      <div className="w-[280px] border-r border-[var(--color-border)] bg-[var(--color-bg-sidebar)] p-4 flex flex-col gap-3">
+        <h3 className="text-[11px] font-semibold uppercase tracking-[0.5px] text-[var(--color-text-muted)]">Add Shape</h3>
+        <Input placeholder="Shape name" value={shapeName} onChange={(e) => setShapeName(e.target.value)} />
+        <select className="h-7 bg-white/5 border border-[var(--color-border)] rounded text-[var(--color-text-primary)] text-xs px-2 outline-none cursor-pointer" value={category} onChange={(e) => setCategory(e.target.value)}>
+          {CATEGORIES.filter((c) => c !== "All").map((c) => (<option key={c} value={c}>{c}</option>))}
+        </select>
+        <label className="flex-1 border-2 border-dashed border-[var(--color-border)] rounded-md flex flex-col items-center justify-center gap-2 p-3 text-[var(--color-text-muted)] hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-bg)] hover:text-[var(--color-accent)] transition-all cursor-pointer min-h-[120px]">
+          <Upload size={26} className="opacity-50" />
+          <span className="text-xs text-center">Drop SVG here<br />or click to browse</span>
+          <span className="text-[10px] opacity-70">max 50KB</span>
+          <input type="file" accept=".svg" className="hidden" onChange={handleFile} />
+        </label>
+        <p className="text-[10px] text-[var(--color-text-muted)] text-center">— or paste SVG —</p>
+        <textarea
+          className="w-full h-16 bg-white/3 border border-[var(--color-border)] rounded text-[var(--color-text-secondary)] text-[11px] p-2 outline-none resize-y font-mono focus:border-[var(--color-accent)] placeholder:text-[var(--color-text-muted)]"
+          placeholder="Paste SVG code..." value={svgPaste} onChange={(e) => setSvgPaste(e.target.value)}
+        />
+        {error && <p className="text-xs text-[var(--color-danger)]">{error}</p>}
+        <Button variant="outline" className="w-full" onClick={handleAdd}><Plus size={14} /> Add</Button>
+        <div className="border-t border-[var(--color-border)] pt-3 flex gap-2">
+          <Button variant="outline" size="sm" className="flex-1" onClick={handleExport}><Download size={12} /> Export</Button>
+          <Button variant="outline" size="sm" className="flex-1" onClick={handleImport}><UploadIcon size={12} /> Import</Button>
         </div>
-        <span className="text-[11px] text-[var(--color-text-muted)]">{shapes.length} shapes</span>
-      </header>
-
-      <div className="flex" style={{ height: "calc(100vh - 48px)" }}>
-        {/* Upload Panel */}
-        <div className="w-[280px] border-r border-[var(--color-border)] bg-[var(--color-bg-sidebar)] p-4 flex flex-col gap-3 overflow-y-auto">
-          <h3 className="text-[11px] font-semibold uppercase tracking-[0.5px] text-[var(--color-text-muted)]">Add Shape</h3>
-          <Input placeholder="Shape name" value={shapeName} onChange={(e) => setShapeName(e.target.value)} />
-          <select
-            className="h-7 bg-white/5 border border-[var(--color-border)] rounded text-[var(--color-text-primary)] text-xs px-2 outline-none cursor-pointer"
-            value={category} onChange={(e) => setCategory(e.target.value)}
-          >
-            {CATEGORIES.filter((c) => c !== "All").map((c) => (<option key={c} value={c}>{c}</option>))}
-          </select>
-
-          <label className="flex-1 border-2 border-dashed border-[var(--color-border)] rounded-md flex flex-col items-center justify-center gap-2 p-4 text-[var(--color-text-muted)] hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-bg)] hover:text-[var(--color-accent)] transition-all cursor-pointer min-h-[140px]">
-            <Upload size={28} className="opacity-50" />
-            <span className="text-xs text-center">Drop SVG file here<br />or click to browse</span>
-            <span className="text-[10px] opacity-70">SVG only (max 50KB)</span>
-            <input type="file" accept=".svg" className="hidden" onChange={handleFile} />
-          </label>
-
-          <p className="text-[10px] text-[var(--color-text-muted)] text-center">— or paste SVG —</p>
-          <textarea
-            className="w-full h-20 bg-white/3 border border-[var(--color-border)] rounded text-[var(--color-text-secondary)] text-[11px] p-2 outline-none resize-y font-mono focus:border-[var(--color-accent)] placeholder:text-[var(--color-text-muted)]"
-            placeholder="Paste SVG code..."
-            value={svgPaste} onChange={(e) => setSvgPaste(e.target.value)}
-          />
-          {error && <p className="text-xs text-[var(--color-danger)]">{error}</p>}
-          <Button variant="outline" className="w-full" onClick={handleAdd}><Plus size={14} /> Add to Library</Button>
-
-          <div className="border-t border-[var(--color-border)] pt-3 flex gap-2">
-            <Button variant="outline" size="sm" className="flex-1" onClick={handleExport}><Download size={12} /> Export</Button>
-            <Button variant="outline" size="sm" className="flex-1" onClick={handleImport}><UploadIcon size={12} /> Import</Button>
-          </div>
+      </div>
+      <div className="flex-1 p-4 overflow-y-auto">
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
+          {CATEGORIES.map((cat) => (
+            <button key={cat} className={`px-2.5 py-1 rounded-full text-[11px] border transition-all ${activeCategory === cat ? "bg-[var(--color-accent)] border-[var(--color-accent)] text-white" : "border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-accent)]"}`} onClick={() => setActiveCategory(cat)}>{cat}</button>
+          ))}
         </div>
+        <div className="grid grid-cols-4 gap-3">
+          {filtered.map((shape) => (
+            <div key={shape.id} className="aspect-square rounded-lg border border-[var(--color-border)] bg-white/3 flex flex-col items-center justify-center gap-2 hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-bg)] transition-all relative overflow-hidden group p-3">
+              <div className="w-12 h-12 text-[var(--color-text-secondary)] flex items-center justify-center" dangerouslySetInnerHTML={{ __html: shape.svgContent }} />
+              <span className="text-[11px] text-[var(--color-text-muted)] text-center leading-tight truncate w-full">{shape.name}</span>
+              <button className="absolute top-2 right-2 w-[20px] h-[20px] rounded-full bg-[var(--color-danger)] text-white hidden group-hover:flex items-center justify-center text-[11px]" onClick={() => { removeFromLibrary(shape.id); refresh(); }}><X size={11} /></button>
+            </div>
+          ))}
+          {filtered.length === 0 && <div className="col-span-4 text-center py-16 text-xs text-[var(--color-text-muted)]">No shapes in this category.</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
 
-        {/* Library Grid */}
-        <div className="flex-1 p-4 overflow-y-auto">
-          <div className="flex items-center gap-2 mb-4 flex-wrap">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat}
-                className={`px-2.5 py-1 rounded-full text-[11px] border transition-all ${
-                  activeCategory === cat
-                    ? "bg-[var(--color-accent)] border-[var(--color-accent)] text-white"
-                    : "border-[var(--color-border)] bg-transparent text-[var(--color-text-secondary)] hover:border-[var(--color-accent)] hover:text-[var(--color-text-primary)]"
-                }`}
-                onClick={() => setActiveCategory(cat)}
-              >{cat}</button>
-            ))}
-          </div>
+/* =========== Settings Tab =========== */
 
-          <div className="grid grid-cols-4 gap-3">
-            {filtered.map((shape) => (
-              <div
-                key={shape.id}
-                className="aspect-square rounded-lg border border-[var(--color-border)] bg-white/3 flex flex-col items-center justify-center gap-2 hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-bg)] transition-all relative overflow-hidden group p-3"
-              >
-                <div className="w-12 h-12 text-[var(--color-text-secondary)] flex items-center justify-center" dangerouslySetInnerHTML={{ __html: shape.svgContent }} />
-                <span className="text-[11px] text-[var(--color-text-muted)] text-center leading-tight truncate w-full">{shape.name}</span>
-                <button
-                  className="absolute top-2 right-2 w-[20px] h-[20px] rounded-full bg-[var(--color-danger)] text-white hidden group-hover:flex items-center justify-center text-[11px]"
-                  onClick={() => handleRemove(shape.id)}
-                ><X size={11} /></button>
-              </div>
-            ))}
-            {filtered.length === 0 && (
-              <div className="col-span-4 text-center py-16 text-xs text-[var(--color-text-muted)]">No shapes yet. Upload one on the left.</div>
+function SettingsTab({ profile, onChange }: { profile: AdminProfile; onChange: (p: AdminProfile) => void }) {
+  const [name, setName] = useState(profile.name);
+  const [email, setEmail] = useState(profile.email);
+  const [adminId, setAdminId] = useState(profile.adminId);
+  const [logoUrl, setLogoUrl] = useState(profile.logoUrl);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = () => {
+    const updated = { ...profile, name, email, adminId, logoUrl };
+    saveAdminProfile(updated);
+    onChange(updated);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 100 * 1024) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setLogoUrl(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div className="p-6 max-w-2xl">
+      <h2 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">Admin Settings</h2>
+
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-4 flex flex-col gap-4">
+        <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-[0.5px]">Logo</h3>
+        <div className="flex items-center gap-4">
+          {logoUrl ? (
+            <img src={logoUrl} alt="Logo" className="w-16 h-16 rounded-lg object-contain border border-[var(--color-border)]" />
+          ) : (
+            <div className="w-16 h-16 bg-gradient-to-br from-[var(--color-accent)] to-purple-500 rounded-lg flex items-center justify-center text-white text-xl font-bold">?</div>
+          )}
+          <div className="flex flex-col gap-2">
+            <label className="cursor-pointer">
+              <Button variant="outline" size="sm" onClick={() => document.getElementById("logo-upload")?.click()}>
+                <Upload size={12} /> Upload Logo
+              </Button>
+              <input id="logo-upload" type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+            </label>
+            {logoUrl && (
+              <Button variant="ghost" size="sm" onClick={() => setLogoUrl("")}><Trash2 size={12} /> Remove</Button>
             )}
           </div>
         </div>
       </div>
+
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-4 flex flex-col gap-3 mt-4">
+        <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-[0.5px]">Profile</h3>
+        <div className="grid gap-3">
+          <LabelInput label="Admin Name" value={name} onChange={setName} />
+          <LabelInput label="Email" value={email} onChange={setEmail} type="email" />
+          <LabelInput label="Admin ID" value={adminId} onChange={setAdminId} />
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 mt-4">
+        <Button variant="primary" onClick={handleSave}><Save size={14} /> {saved ? "Saved!" : "Save Settings"}</Button>
+      </div>
+    </div>
+  );
+}
+
+function LabelInput({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-[11px] text-[var(--color-text-muted)]">{label}</span>
+      <Input type={type} value={value} onChange={(e) => onChange(e.target.value)} className="w-full" />
+    </div>
+  );
+}
+
+/* =========== Security Tab =========== */
+
+function SecurityTab({ profile, onChange }: { profile: AdminProfile; onChange: (p: AdminProfile) => void }) {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [newOtp, setNewOtp] = useState(profile.otpCode);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showOtp, setShowOtp] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSavePassword = () => {
+    setError("");
+    if (currentPassword !== profile.password) { setError("Current password is incorrect"); return; }
+    if (newPassword.length < 6) { setError("Password must be at least 6 characters"); return; }
+    if (newPassword !== confirmPassword) { setError("Passwords do not match"); return; }
+    const updated = { ...profile, password: newPassword };
+    saveAdminProfile(updated);
+    onChange(updated);
+    setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
+    setSaved(true); setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleSaveOtp = () => {
+    const code = newOtp.replace(/\D/g, "").slice(0, 6);
+    if (code.length < 4) { setError("OTP code must be at least 4 digits"); return; }
+    const updated = { ...profile, otpCode: code };
+    saveAdminProfile(updated);
+    onChange(updated);
+    setNewOtp(code);
+    setError("");
+    setSaved(true); setTimeout(() => setSaved(false), 2000);
+  };
+
+  return (
+    <div className="p-6 max-w-2xl">
+      <h2 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">Security Settings</h2>
+
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-4 flex flex-col gap-3">
+        <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-[0.5px]">Change Password</h3>
+        <div className="relative">
+          <LabelInput label="Current Password" value={currentPassword} onChange={setCurrentPassword} type={showPassword ? "text" : "password"} />
+        </div>
+        <LabelInput label="New Password" value={newPassword} onChange={setNewPassword} type={showPassword ? "text" : "password"} />
+        <LabelInput label="Confirm New Password" value={confirmPassword} onChange={setConfirmPassword} type={showPassword ? "text" : "password"} />
+        <div className="flex items-center gap-1">
+          <button className="text-[11px] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] flex items-center gap-1 bg-transparent border-none cursor-pointer" onClick={() => setShowPassword(!showPassword)}>
+            {showPassword ? <EyeOff size={12} /> : <Eye size={12} />} {showPassword ? "Hide" : "Show"} passwords
+          </button>
+        </div>
+        <Button variant="primary" size="sm" onClick={handleSavePassword}><Save size={12} /> Update Password</Button>
+      </div>
+
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-4 flex flex-col gap-3 mt-4">
+        <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-[0.5px]">OTP / Verification Code</h3>
+        <p className="text-xs text-[var(--color-text-muted)]">
+          This code is used as the second authentication step. For WhatsApp OTP via Onesender, configure the webhook endpoint when backend is available.
+        </p>
+        <div className="relative">
+          <LabelInput label="Verification Code (4-6 digits)" value={newOtp} onChange={(v) => setNewOtp(v.replace(/\D/g, "").slice(0, 6))} type={showOtp ? "text" : "password"} />
+        </div>
+        <div className="flex items-center gap-1">
+          <button className="text-[11px] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] flex items-center gap-1 bg-transparent border-none cursor-pointer" onClick={() => setShowOtp(!showOtp)}>
+            {showOtp ? <EyeOff size={12} /> : <Eye size={12} />} {showOtp ? "Hide" : "Show"} code
+          </button>
+        </div>
+        <Button variant="primary" size="sm" onClick={handleSaveOtp}><Save size={12} /> Update OTP Code</Button>
+      </div>
+
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-4 mt-4">
+        <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-[0.5px] mb-2">Onesender WhatsApp Integration</h3>
+        <p className="text-xs text-[var(--color-text-muted)] leading-relaxed">
+          To send real OTP codes via WhatsApp, integrate with <a href="https://onesender.net" target="_blank" rel="noopener noreferrer" className="text-[var(--color-accent)] hover:underline">Onesender API</a>.
+          This requires a backend server. When ready, configure the API endpoint and webhook URL below.
+        </p>
+        <div className="grid gap-2 mt-3">
+          <LabelInput label="Onesender API URL" value="" onChange={() => {}} />
+          <LabelInput label="Onesender API Key" value="" onChange={() => {}} type="password" />
+        </div>
+        <p className="text-[10px] text-[var(--color-text-muted)] mt-2">Backend integration coming soon. Contact support for setup.</p>
+      </div>
+
+      {error && <p className="text-xs text-[var(--color-danger)] mt-3">{error}</p>}
+      {saved && <p className="text-xs text-[var(--color-success)] mt-3 flex items-center gap-1"><ShieldCheck size={12} /> Settings saved successfully</p>}
     </div>
   );
 }
