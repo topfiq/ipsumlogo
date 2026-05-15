@@ -5,13 +5,14 @@ type SelectProps = SelectHTMLAttributes<HTMLSelectElement>;
 export function Select({ className = "", children, ...props }: SelectProps) {
   return (
     <select
-      className={`h-7 bg-white/5 border border-[var(--color-border)] rounded text-[var(--color-text-primary)] text-xs px-2 outline-none focus:border-[var(--color-accent)] cursor-pointer appearance-none bg-no-repeat ${className}`}
+      className={`h-7 bg-white/10 border border-[var(--color-border)] rounded text-[var(--color-text-primary)] text-xs pl-2 pr-7 outline-none focus:border-[var(--color-accent)] cursor-pointer appearance-none ${className}`}
       style={{
-        backgroundImage:
-          "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23808080' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\")",
-        backgroundPosition: "right 0.5rem center",
-        backgroundSize: "1.5em 1.5em",
-        paddingRight: "2rem",
+        backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23808080' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\")",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "right 8px center",
+        backgroundSize: "12px",
+        WebkitAppearance: "none",
+        MozAppearance: "none",
       }}
       {...props}
     >

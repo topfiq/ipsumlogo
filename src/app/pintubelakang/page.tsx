@@ -31,10 +31,11 @@ interface AdminProfile {
   logoUrl: string;
   onesenderUrl: string;
   onesenderKey: string;
+  phone: string;
 }
 
 function getDefaultProfile(): AdminProfile {
-  return { name: "Admin", email: "", adminId: "ADM-001", password: DEFAULT_PASSWORD, otpCode: DEFAULT_OTP, logoUrl: "", onesenderUrl: "", onesenderKey: "" };
+  return { name: "Admin", email: "", adminId: "ADM-001", password: DEFAULT_PASSWORD, otpCode: DEFAULT_OTP, logoUrl: "", onesenderUrl: "", onesenderKey: "", phone: "" };
 }
 
 function getAdminProfile(): AdminProfile {
@@ -62,6 +63,8 @@ export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [otpInput, setOtpInput] = useState("");
   const [error, setError] = useState("");
+  const [currentOtp, setCurrentOtp] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [profile, setProfile] = useState<AdminProfile>(() => {
     if (typeof window === "undefined") return getDefaultProfile();
     return getAdminProfile();
@@ -69,13 +72,30 @@ export default function AdminPage() {
 
   const handlePasswordSubmit = () => {
     const p = getAdminProfile();
-    if (password === p.password) { setStep("otp"); setError(""); }
-    else setError("Incorrect password");
+    if (password === p.password) {
+      const code = generateOtpCode();
+      setCurrentOtp(code);
+      setStep("otp");
+      setError("");
+      sendOtp(code, p);
+    } else setError("Incorrect password");
+  };
+
+  const sendOtp = async (code: string, p: AdminProfile) => {
+    if (p.onesenderUrl && p.onesenderKey && phoneNumber) {
+      const result = await sendOtpViaOnesender(phoneNumber, code, p.onesenderUrl, p.onesenderKey);
+      if (!result.success) setError(`Failed to send OTP: ${result.error}`);
+    } else if (!p.onesenderUrl) {
+      simulateSendOtp(phoneNumber || "admin", code);
+      setError("OTP: " + code + " (Onesender not configured — showing code for debug)");
+    } else {
+      setError("Enter phone number in Security tab to send OTP via WhatsApp");
+    }
   };
 
   const handleOtpSubmit = () => {
     const p = getAdminProfile();
-    if (otpInput === p.otpCode) { setStep("done"); setError(""); }
+    if (otpInput === currentOtp || otpInput === p.otpCode) { setStep("done"); setError(""); setCurrentOtp(""); }
     else setError("Incorrect verification code");
   };
 
@@ -100,8 +120,13 @@ export default function AdminPage() {
           </div>
           <div className="p-4 flex flex-col gap-3">
             <p className="text-sm text-[var(--color-text-secondary)]">
-              {step === "password" ? "Enter your admin password." : "Enter the OTP verification code."}
+              {step === "password" ? "Enter your admin password." : `Enter the 6-digit code sent to ${phoneNumber || "WhatsApp"}.`}
             </p>
+
+            {step === "password" && (
+              <Input placeholder="Phone number (for OTP via WhatsApp)" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="w-full h-10" type="tel" />
+            )}
+
             <Input
               type={step === "password" ? "password" : "text"}
               placeholder={step === "password" ? "Password" : "6-digit code"}
@@ -111,7 +136,7 @@ export default function AdminPage() {
               className="w-full h-10 text-base tracking-widest text-center"
               maxLength={step === "password" ? 30 : 6}
             />
-            {error && <p className="text-xs text-[var(--color-danger)] text-center">{error}</p>}
+            {error && <p className="text-xs text-[var(--color-danger)] text-center break-words">{error}</p>}
             <Button variant="primary" className="w-full h-10" onClick={step === "password" ? handlePasswordSubmit : handleOtpSubmit}>
               <Lock size={14} /> {step === "password" ? "Next" : "Verify & Login"}
             </Button>
@@ -329,6 +354,7 @@ function ShapesTab({ shapes, refresh }: { shapes: LibraryShape[]; refresh: () =>
 /* =========== Templates Tab =========== */
 
 import { getCanvas } from "@/lib/canvas";
+import { generateOtpCode, sendOtpViaOnesender, simulateSendOtp } from "@/lib/otp";
 
 function TemplatesTab() {
   const [templates, setTemplates] = useState(() => getTemplates());
@@ -338,11 +364,24 @@ function TemplatesTab() {
 
   const refresh = () => setTemplates(getTemplates());
 
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 100 * 1024) { setError("File too large (max 100KB)"); return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const content = ev.target?.result as string;
+      if (isValidSvg(content)) { setSvgPaste(content); setError(""); if (!name) setName(file.name.replace(/\.svg$/i, "")); }
+      else setError("Invalid or unsafe SVG file");
+    };
+    reader.readAsText(file);
+  };
+
   const handleAdd = () => {
     setError("");
     if (!name.trim()) { setError("Enter a template name"); return; }
     const svg = svgPaste.trim();
-    if (!svg) { setError("Paste SVG code for the template preview"); return; }
+    if (!svg) { setError("Upload or paste SVG code"); return; }
     if (!isValidSvg(svg)) { setError("Invalid or unsafe SVG"); return; }
     const clean = sanitizeSvg(svg);
     addTemplate(name.trim(), svgPaste.trim(), clean);
@@ -367,9 +406,15 @@ function TemplatesTab() {
       <div className="flex gap-6">
         <div className="w-[280px] flex flex-col gap-3">
           <h3 className="text-[11px] font-semibold uppercase tracking-[0.5px] text-[var(--color-text-muted)]">Add Logo Template</h3>
-          <Input placeholder="Template name (e.g. 'Business Logo')" value={name} onChange={(e) => setName(e.target.value)} />
-          <p className="text-[10px] text-[var(--color-text-muted)]">Paste SVG code. This will be usable as a starting template by users.</p>
-          <textarea className="w-full h-32 bg-white/3 border border-[var(--color-border)] rounded text-[var(--color-text-secondary)] text-[11px] p-2 outline-none resize-y font-mono focus:border-[var(--color-accent)]" placeholder="Paste SVG code..." value={svgPaste} onChange={(e) => setSvgPaste(e.target.value)} />
+          <Input placeholder="Template name" value={name} onChange={(e) => setName(e.target.value)} />
+          <label className="border-2 border-dashed border-[var(--color-border)] rounded-md flex flex-col items-center justify-center gap-2 p-4 text-[var(--color-text-muted)] hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-bg)] hover:text-[var(--color-accent)] transition-all cursor-pointer min-h-[100px]">
+            <Upload size={24} className="opacity-50" />
+            <span className="text-xs text-center">Drop SVG here<br />or click to browse</span>
+            <span className="text-[10px] opacity-70">max 100KB</span>
+            <input type="file" accept=".svg" className="hidden" onChange={handleFile} />
+          </label>
+          <p className="text-[10px] text-[var(--color-text-muted)] text-center">— or paste SVG —</p>
+          <textarea className="w-full h-24 bg-white/3 border border-[var(--color-border)] rounded text-[var(--color-text-secondary)] text-[11px] p-2 outline-none resize-y font-mono focus:border-[var(--color-accent)]" placeholder="Paste SVG code..." value={svgPaste} onChange={(e) => setSvgPaste(e.target.value)} />
           {error && <p className="text-xs text-[var(--color-danger)]">{error}</p>}
           <Button variant="primary" onClick={handleAdd}><Plus size={14} /> Add Template</Button>
           <p className="text-xs text-[var(--color-text-muted)]">Templates appear in the editor sidebar for quick logo starting points.</p>
@@ -470,6 +515,7 @@ function SecurityTab({ profile, onChange }: { profile: AdminProfile; onChange: (
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [newOtp, setNewOtp] = useState(profile.otpCode);
+  const [phone, setPhone] = useState(profile.phone);
   const [onesenderUrl, setOnesenderUrl] = useState(profile.onesenderUrl);
   const [onesenderKey, setOnesenderKey] = useState(profile.onesenderKey);
   const [showPassword, setShowPassword] = useState(false);
@@ -495,6 +541,12 @@ function SecurityTab({ profile, onChange }: { profile: AdminProfile; onChange: (
     const updated = { ...profile, otpCode: code };
     saveAdminProfile(updated); onChange(updated);
     setNewOtp(code); setError("");
+    setSaved(true); setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleSavePhone = () => {
+    const updated = { ...profile, phone };
+    saveAdminProfile(updated); onChange(updated);
     setSaved(true); setTimeout(() => setSaved(false), 2000);
   };
 
@@ -531,16 +583,18 @@ function SecurityTab({ profile, onChange }: { profile: AdminProfile; onChange: (
       </div>
 
       <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-4 flex flex-col gap-3 mt-4">
-        <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-[0.5px]">Onesender WhatsApp Integration</h3>
+        <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-[0.5px]">Onesender WhatsApp OTP</h3>
         <p className="text-xs text-[var(--color-text-muted)] leading-relaxed">
-          Configure <a href="https://onesender.net" target="_blank" rel="noopener noreferrer" className="text-[var(--color-accent)] hover:underline">Onesender API</a> to send OTP codes via WhatsApp. Requires a backend server.
+          Send OTP via <a href="https://onesender.net" target="_blank" rel="noopener noreferrer" className="text-[var(--color-accent)] hover:underline">Onesender</a> WhatsApp API. Enter your WhatsApp number and Onesender credentials.
         </p>
-        <LabelInput label="Onesender API URL" value={onesenderUrl} onChange={setOnesenderUrl} placeholder="https://api.onesender.net/..." />
+        <LabelInput label="WhatsApp Number (e.g. 6281234567890)" value={phone} onChange={setPhone} placeholder="6281234567890" />
+        <Button variant="primary" size="sm" onClick={handleSavePhone}><Save size={12} /> Save Phone</Button>
+        <LabelInput label="Onesender API URL" value={onesenderUrl} onChange={setOnesenderUrl} placeholder="https://api.onesender.net" />
         <LabelInput label="Onesender API Key" value={onesenderKey} onChange={setOnesenderKey} type={showKey ? "text" : "password"} placeholder="sk_..." />
         <button className="text-[11px] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] flex items-center gap-1 bg-transparent border-none cursor-pointer w-fit" onClick={() => setShowKey(!showKey)}>
           {showKey ? <EyeOff size={12} /> : <Eye size={12} />} {showKey ? "Hide" : "Show"} key
         </button>
-        <Button variant="primary" size="sm" onClick={handleSaveOnesender}><Save size={12} /> Save Onesender Config</Button>
+        <Button variant="primary" size="sm" onClick={handleSaveOnesender}><Save size={12} /> Save Config</Button>
       </div>
 
       {error && <p className="text-xs text-[var(--color-danger)] mt-3">{error}</p>}

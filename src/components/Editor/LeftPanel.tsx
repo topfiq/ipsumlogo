@@ -4,14 +4,37 @@ import { useEditorStore } from "@/store/useEditorStore";
 import { getLibrary } from "@/lib/library";
 import { getTemplates } from "@/lib/templates";
 import type { LibraryShape, LogoTemplate } from "@/types";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { getCanvas } from "@/lib/canvas";
 import { loadSVGFromString, Group, type FabricObject } from "fabric";
+import { HexColorPicker } from "react-colorful";
+import { Slider } from "@/components/ui/Slider";
 
 export function LeftPanel() {
   const { doInsertShape, doInsertText, doInsertLibraryShape } = useEditorStore();
   const libraryShapes = useMemo(() => getLibrary().slice(0, 9), []);
   const templates = useMemo(() => getTemplates(), []);
+  const [bgColor, setBgColor] = useState("#ffffff");
+  const [bgOpacity, setBgOpacity] = useState(1);
+  const [showBgPicker, setShowBgPicker] = useState(false);
+
+  const handleBgChange = (color: string) => {
+    setBgColor(color);
+    const canvas = getCanvas();
+    if (!canvas) return;
+    const objects = canvas.getObjects();
+    const artboard = objects.find((o: FabricObject) => (o as FabricObject & { name?: string }).name === "__artboard__");
+    if (artboard) { artboard.set("fill", color); artboard.set("opacity", bgOpacity); canvas.requestRenderAll(); }
+  };
+
+  const handleBgOpacity = (v: number) => {
+    setBgOpacity(v);
+    const canvas = getCanvas();
+    if (!canvas) return;
+    const objects = canvas.getObjects();
+    const artboard = objects.find((o: FabricObject) => (o as FabricObject & { name?: string }).name === "__artboard__");
+    if (artboard) { artboard.set("opacity", v); canvas.requestRenderAll(); }
+  };
 
   const handleLoadTemplate = (tmpl: LogoTemplate) => {
     const canvas = getCanvas();
@@ -120,10 +143,23 @@ export function LeftPanel() {
       {/* Background */}
       <div className="p-3">
         <h3 className="text-[11px] font-semibold uppercase tracking-[0.5px] text-[var(--color-text-muted)] mb-2.5">Background</h3>
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-7 h-7 rounded border border-[var(--color-border)] bg-white shrink-0" />
-          <span className="text-xs text-[var(--color-text-secondary)]">#FFFFFF</span>
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-7 h-7 rounded border border-[var(--color-border)] shrink-0 cursor-pointer" style={{ background: bgColor, opacity: bgOpacity }} onClick={() => setShowBgPicker(!showBgPicker)} />
+          <input
+            className="h-7 bg-white/5 border border-[var(--color-border)] rounded text-[var(--color-text-primary)] text-xs px-2 outline-none focus:border-[var(--color-accent)] transition-colors flex-1"
+            value={bgColor}
+            onChange={(e) => handleBgChange(e.target.value)}
+          />
         </div>
+        {showBgPicker && (
+          <div className="mb-2 relative" style={{ zIndex: 30 }}>
+            <div className="fixed inset-0 z-20" onClick={() => setShowBgPicker(false)} />
+            <div style={{ position: "relative", zIndex: 31 }}>
+              <HexColorPicker color={bgColor} onChange={handleBgChange} />
+            </div>
+          </div>
+        )}
+        <Slider value={bgOpacity} onChange={handleBgOpacity} label="Opacity" />
       </div>
     </aside>
   );
