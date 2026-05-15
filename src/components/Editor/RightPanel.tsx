@@ -6,11 +6,13 @@ import { Select } from "@/components/ui/Select";
 import { Slider } from "@/components/ui/Slider";
 import { Button } from "@/components/ui/Button";
 import { FONT_LIST, BLEND_MODES } from "@/lib/constants";
+import { getCanvas } from "@/lib/canvas";
 import { HexColorPicker } from "react-colorful";
-import { useState } from "react";
+import { Gradient } from "fabric";
+import { useState, useEffect } from "react";
 import {
   Eye, EyeOff, Lock, Unlock, Trash2, AlignLeft, AlignCenter, AlignRight,
-  Bold, Italic, Underline
+  Bold, Italic, Underline, PaintBucket
 } from "lucide-react";
 
 export function RightPanel() {
@@ -22,8 +24,39 @@ export function RightPanel() {
   const { transform, shape, text, blendMode } = selectedProps;
   const [showFillPicker, setShowFillPicker] = useState(false);
   const [showStrokePicker, setShowStrokePicker] = useState(false);
+  const [gradientOn, setGradientOn] = useState(false);
+  const [gradientColor1, setGradientColor1] = useState("#6366f1");
+  const [gradientColor2, setGradientColor2] = useState("#8b5cf6");
+  const [showGradientPicker1, setShowGradientPicker1] = useState(false);
+  const [showGradientPicker2, setShowGradientPicker2] = useState(false);
 
   const hasSelection = !!transform;
+
+  const applyGradient = () => {
+    if (!gradientOn) return;
+    const canvas = getCanvas();
+    if (!canvas) return;
+    const obj = canvas.getActiveObject();
+    if (!obj) return;
+    const fill = new Gradient({
+      type: "linear",
+      gradientUnits: "percentage",
+      coords: { x1: 0, y1: 0, x2: 1, y2: 1 },
+      colorStops: [
+        { offset: 0, color: gradientColor1 },
+        { offset: 1, color: gradientColor2 },
+      ],
+    });
+    obj.set("fill", fill);
+    if (shape) updateShape({ fill: "gradient" });
+    if (text) updateText({ fill: "gradient" });
+    canvas.renderAll();
+  };
+
+  useEffect(() => {
+    if (gradientOn) applyGradient();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gradientColor1, gradientColor2, gradientOn]);
 
   return (
     <aside className="w-[260px] bg-[var(--color-bg-right)] border-l border-[var(--color-border)] flex flex-col flex-shrink-0 overflow-y-auto">
@@ -74,57 +107,88 @@ export function RightPanel() {
         </div>
       </div>
 
-      {/* Fill */}
-      {shape && (
+      {/* Fill / Color */}
+      {(shape || text) && (
         <div className="p-3 border-b border-[var(--color-border)]">
-          <h3 className="text-[11px] font-semibold uppercase tracking-[0.5px] text-[var(--color-text-muted)] mb-2">Fill</h3>
-          <div className="flex items-center gap-2 mb-1.5">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.5px] text-[var(--color-text-muted)]">Fill</h3>
             <button
-              className="w-7 h-7 rounded border border-[var(--color-border)] shrink-0 cursor-pointer"
-              style={{ background: shape.fill || "#6366f1" }}
-              onClick={() => setShowFillPicker(!showFillPicker)}
-            />
-            <Input value={shape.fill || ""} onChange={(e) => updateShape({ fill: e.target.value })} className="flex-1" />
+              className={`text-[11px] px-2 py-0.5 rounded border transition-colors ${gradientOn ? "bg-[var(--color-accent-bg)] border-[var(--color-accent)] text-[var(--color-accent)]" : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-[var(--color-accent)] hover:text-[var(--color-text-primary)]"}`}
+              onClick={() => setGradientOn(!gradientOn)}
+            >
+              <PaintBucket size={11} className="inline mr-1" />
+              Gradient
+            </button>
           </div>
-          {showFillPicker && (
-            <div className="mb-2 relative z-20">
-              <div className="fixed inset-0" onClick={() => setShowFillPicker(false)} />
-              <div className="relative">
-                <HexColorPicker color={shape.fill || "#6366f1"} onChange={(c) => updateShape({ fill: c })} />
-              </div>
-            </div>
-          )}
-          <Slider
-            value={shape.opacity}
-            onChange={(v) => updateShape({ opacity: v })}
-            label="Opacity"
-          />
-        </div>
-      )}
 
-      {/* Text Fill */}
-      {text && (
-        <div className="p-3 border-b border-[var(--color-border)]">
-          <h3 className="text-[11px] font-semibold uppercase tracking-[0.5px] text-[var(--color-text-muted)] mb-2">Color</h3>
-          <div className="flex items-center gap-2 mb-1.5">
-            <button
-              className="w-7 h-7 rounded border border-[var(--color-border)] shrink-0 cursor-pointer"
-              style={{ background: text.fill || "#1e1e1e" }}
-              onClick={() => setShowFillPicker(!showFillPicker)}
-            />
-            <Input value={text.fill || ""} onChange={(e) => updateText({ fill: e.target.value })} className="flex-1" />
-          </div>
-          {showFillPicker && (
-            <div className="mb-2 relative z-20">
-              <div className="fixed inset-0" onClick={() => setShowFillPicker(false)} />
-              <div className="relative">
-                <HexColorPicker color={text.fill || "#1e1e1e"} onChange={(c) => updateText({ fill: c })} />
+          {!gradientOn && (
+            <>
+              <div className="flex items-center gap-2 mb-1.5">
+                <button
+                  className="w-7 h-7 rounded border border-[var(--color-border)] shrink-0 cursor-pointer"
+                  style={{ background: (shape?.fill || text?.fill || "#6366f1") }}
+                  onClick={() => setShowFillPicker(!showFillPicker)}
+                />
+                <Input
+                  value={(shape?.fill || text?.fill || "") as string}
+                  onChange={(e) => shape ? updateShape({ fill: e.target.value }) : updateText({ fill: e.target.value })}
+                  className="flex-1"
+                />
               </div>
+              {showFillPicker && (
+                <div className="mb-2 relative z-20">
+                  <div className="fixed inset-0" onClick={() => setShowFillPicker(false)} />
+                  <div className="relative">
+                    <HexColorPicker
+                      color={(shape?.fill || text?.fill || "#6366f1") as string}
+                      onChange={(c) => shape ? updateShape({ fill: c }) : updateText({ fill: c })}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {gradientOn && (
+            <div className="flex flex-col gap-2 mb-1.5">
+              <div className="flex items-center gap-2">
+                <button
+                  className="w-7 h-7 rounded border border-[var(--color-border)] shrink-0 cursor-pointer"
+                  style={{ background: gradientColor1 }}
+                  onClick={() => { setShowGradientPicker1(!showGradientPicker1); setShowGradientPicker2(false); }}
+                />
+                <span className="text-[11px] text-[var(--color-text-muted)]">→</span>
+                <button
+                  className="w-7 h-7 rounded border border-[var(--color-border)] shrink-0 cursor-pointer"
+                  style={{ background: gradientColor2 }}
+                  onClick={() => { setShowGradientPicker2(!showGradientPicker2); setShowGradientPicker1(false); }}
+                />
+                <div
+                  className="flex-1 h-7 rounded border border-[var(--color-border)]"
+                  style={{ background: `linear-gradient(90deg, ${gradientColor1}, ${gradientColor2})` }}
+                />
+              </div>
+              {showGradientPicker1 && (
+                <div className="relative z-20">
+                  <div className="fixed inset-0" onClick={() => setShowGradientPicker1(false)} />
+                  <HexColorPicker color={gradientColor1} onChange={setGradientColor1} />
+                </div>
+              )}
+              {showGradientPicker2 && (
+                <div className="relative z-20">
+                  <div className="fixed inset-0" onClick={() => setShowGradientPicker2(false)} />
+                  <HexColorPicker color={gradientColor2} onChange={setGradientColor2} />
+                </div>
+              )}
+              <Button variant="outline" size="sm" className="w-full" onClick={applyGradient}>
+                <PaintBucket size={12} /> Apply Gradient
+              </Button>
             </div>
           )}
+
           <Slider
-            value={text.opacity}
-            onChange={(v) => updateText({ opacity: v })}
+            value={shape?.opacity || text?.opacity || 1}
+            onChange={(v) => shape ? updateShape({ opacity: v }) : updateText({ opacity: v })}
             label="Opacity"
           />
         </div>

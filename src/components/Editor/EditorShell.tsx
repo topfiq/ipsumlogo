@@ -7,6 +7,7 @@ import { Sidebar } from "@/components/Editor/Sidebar";
 import { LeftPanel } from "@/components/Editor/LeftPanel";
 import { RightPanel } from "@/components/Editor/RightPanel";
 import { StatusBar } from "@/components/Editor/StatusBar";
+import { TutorialOverlay } from "@/components/Editor/TutorialOverlay";
 import { useEditorStore } from "@/store/useEditorStore";
 import { getStoredLicense } from "@/lib/license";
 import { preloadFonts } from "@/lib/fonts";
@@ -39,13 +40,20 @@ export default function EditorShell() {
       <Toolbar />
 
       <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
-        <Sidebar />
+        <div className="sidebar-highlight" style={{ display: "contents" }}>
+          <Sidebar />
+        </div>
         <LeftPanel />
-        <Canvas />
-        <RightPanel />
+        <div className="canvas-highlight" style={{ display: "contents", flex: 1, minWidth: 0 }}>
+          <Canvas />
+        </div>
+        <div className="right-panel-highlight" style={{ display: "contents" }}>
+          <RightPanel />
+        </div>
       </div>
 
       <StatusBar />
+      <TutorialOverlay />
     </div>
   );
 }

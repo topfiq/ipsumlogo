@@ -1,7 +1,7 @@
 "use client";
 
 import { useEditorStore } from "@/store/useEditorStore";
-import { FONT_LIST, GRADIENT_PRESETS } from "@/lib/constants";
+import { FONT_LIST } from "@/lib/constants";
 import { getLibrary } from "@/lib/library";
 import type { LibraryShape } from "@/types";
 import { useMemo } from "react";
@@ -98,23 +98,8 @@ export function LeftPanel() {
         </div>
       </div>
 
-      {/* Gradient Presets */}
-      <div className="p-3 border-b border-[var(--color-border)]">
-        <h3 className="text-[11px] font-semibold uppercase tracking-[0.5px] text-[var(--color-text-muted)] mb-2.5">Gradients</h3>
-        <div className="grid grid-cols-4 gap-1">
-          {GRADIENT_PRESETS.map(([c1, c2], i) => (
-            <button
-              key={i}
-              className="aspect-square rounded border-2 border-transparent cursor-pointer hover:border-white transition-all"
-              style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}
-              title={`Gradient ${i + 1}`}
-            />
-          ))}
-        </div>
-      </div>
-
       {/* Background */}
-      <div className="p-3 border-b border-[var(--color-border)]">
+      <div className="p-3">
         <h3 className="text-[11px] font-semibold uppercase tracking-[0.5px] text-[var(--color-text-muted)] mb-2.5">Background</h3>
         <div className="flex items-center gap-2 mb-1">
           <div className="w-7 h-7 rounded border border-[var(--color-border)] bg-white shrink-0" />
