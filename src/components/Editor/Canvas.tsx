@@ -47,7 +47,7 @@ export default function Canvas() {
       const p = el.parentElement!;
       canvas.setWidth(p.clientWidth);
       canvas.setHeight(p.clientHeight);
-      canvas.renderAll();
+      canvas.requestRenderAll();
     };
 
     const onKey = (e: KeyboardEvent) => handleKeyDown(e);

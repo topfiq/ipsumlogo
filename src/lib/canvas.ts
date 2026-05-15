@@ -134,7 +134,7 @@ export function createArtboard(canvas: ICanvas, width: number, height: number): 
   });
 
   canvas.add(artboard);
-  canvas.renderAll();
+  canvas.requestRenderAll();
   return artboard;
 }
 
@@ -142,7 +142,7 @@ export function addRectangle(canvas: ICanvas, opts?: Record<string, unknown>) {
   const rect = new Rect({ left: 100, top: 100, width: 120, height: 80, fill: "#6366f1", ...opts });
   canvas.add(rect);
   canvas.setActiveObject(rect);
-  canvas.renderAll();
+  canvas.requestRenderAll();
   return rect;
 }
 
@@ -150,7 +150,7 @@ export function addCircle(canvas: ICanvas, opts?: Record<string, unknown>) {
   const circle = new Circle({ left: 100, top: 100, radius: 50, fill: "#6366f1", ...opts });
   canvas.add(circle);
   canvas.setActiveObject(circle);
-  canvas.renderAll();
+  canvas.requestRenderAll();
   return circle;
 }
 
@@ -158,7 +158,7 @@ export function addTriangle(canvas: ICanvas, opts?: Record<string, unknown>) {
   const triangle = new Triangle({ left: 100, top: 100, width: 100, height: 100, fill: "#6366f1", ...opts });
   canvas.add(triangle);
   canvas.setActiveObject(triangle);
-  canvas.renderAll();
+  canvas.requestRenderAll();
   return triangle;
 }
 
@@ -166,7 +166,7 @@ export function addLine(canvas: ICanvas, opts?: Record<string, unknown>) {
   const line = new Line([50, 50, 200, 50], { left: 100, top: 100, stroke: "#6366f1", strokeWidth: 4, ...opts });
   canvas.add(line);
   canvas.setActiveObject(line);
-  canvas.renderAll();
+  canvas.requestRenderAll();
   return line;
 }
 
@@ -175,7 +175,7 @@ export function addStar(canvas: ICanvas) {
   const star = new Polygon(pts, { left: 100, top: 100, fill: "#f59e0b", originX: "center", originY: "center" });
   canvas.add(star);
   canvas.setActiveObject(star);
-  canvas.renderAll();
+  canvas.requestRenderAll();
   return star;
 }
 
@@ -184,7 +184,7 @@ export function addPolygon(canvas: ICanvas, sides = 6) {
   const polygon = new Polygon(pts, { left: 100, top: 100, fill: "#6366f1", originX: "center", originY: "center" });
   canvas.add(polygon);
   canvas.setActiveObject(polygon);
-  canvas.renderAll();
+  canvas.requestRenderAll();
   return polygon;
 }
 
@@ -192,7 +192,7 @@ export function addText(canvas: ICanvas, textStr = "Text", opts?: Record<string,
   const text = new Textbox(textStr, { left: 100, top: 100, fontSize: 48, fontFamily: "Inter", fontWeight: "bold", fill: "#1e1e1e", width: 300, textAlign: "center", ...opts });
   canvas.add(text);
   canvas.setActiveObject(text);
-  canvas.renderAll();
+  canvas.requestRenderAll();
   return text;
 }
 
@@ -207,7 +207,7 @@ export function addSvgShape(canvas: ICanvas, svgString: string) {
     }
     canvas.add(group);
     canvas.setActiveObject(group);
-    canvas.renderAll();
+    canvas.requestRenderAll();
   });
 }
 
@@ -219,7 +219,7 @@ export function clearCanvas(canvas: ICanvas) {
     }
   });
   canvas.discardActiveObject();
-  canvas.renderAll();
+  canvas.requestRenderAll();
 }
 
 function createStarPoints(points: number, innerRadius: number, outerRadius: number) {

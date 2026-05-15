@@ -61,15 +61,15 @@ export function LeftPanel() {
           Library Shapes
           <span className="font-normal text-[var(--color-text-muted)] normal-case ml-1">({libraryShapes.length})</span>
         </h3>
-        <div className="grid grid-cols-3 gap-1">
+        <div className="grid grid-cols-3 gap-1.5">
           {libraryShapes.map((shape: LibraryShape) => (
             <button
               key={shape.id}
-              className="aspect-square rounded border border-[var(--color-border)] bg-white/3 flex items-center justify-center text-[var(--color-text-secondary)] hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-bg)] hover:text-[var(--color-accent)] transition-all"
+              className="aspect-square rounded border border-[var(--color-border)] bg-white/3 flex items-center justify-center text-[var(--color-text-secondary)] hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-bg)] hover:text-[var(--color-accent)] transition-all p-1"
               onClick={() => doInsertLibraryShape(shape.svgContent)}
               title={shape.name}
             >
-              <div className="w-[22px] h-[22px]" dangerouslySetInnerHTML={{ __html: shape.svgContent }} />
+              <div className="w-6 h-6 flex items-center justify-center" dangerouslySetInnerHTML={{ __html: shape.svgContent }} />
             </button>
           ))}
         </div>

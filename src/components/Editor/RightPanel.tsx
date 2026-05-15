@@ -49,7 +49,7 @@ export function RightPanel() {
     });
     obj.set("fill", fill);
     obj.setCoords();
-    canvas.renderAll();
+    canvas.requestRenderAll();
     useEditorStore.getState().pushHistory();
     useEditorStore.getState().updateSelected();
   };

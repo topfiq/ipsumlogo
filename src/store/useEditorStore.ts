@@ -180,7 +180,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     if (props.rotation !== undefined) obj.set("angle", props.rotation);
 
     obj.setCoords();
-    canvas.renderAll();
+    canvas.requestRenderAll();
     get().updateSelected();
     get().pushHistory();
   },
@@ -202,7 +202,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     }
 
     obj.setCoords();
-    canvas.renderAll();
+    canvas.requestRenderAll();
     get().updateSelected();
     get().pushHistory();
   },
@@ -224,7 +224,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     if (props.opacity !== undefined) obj.set("opacity", props.opacity);
 
     obj.setCoords();
-    canvas.renderAll();
+    canvas.requestRenderAll();
     get().updateSelected();
     get().pushHistory();
   },
@@ -260,7 +260,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     if (!canvas) return;
     const newIndex = historyIndex - 1;
     void canvas.loadFromJSON(JSON.parse(history[newIndex] as string)).then(() => {
-      canvas.renderAll();
+      canvas.requestRenderAll();
       set({ historyIndex: newIndex });
       get().updateSelected();
       get().refreshLayers();
@@ -274,7 +274,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     if (!canvas) return;
     const newIndex = historyIndex + 1;
     void canvas.loadFromJSON(JSON.parse(history[newIndex] as string)).then(() => {
-      canvas.renderAll();
+      canvas.requestRenderAll();
       set({ historyIndex: newIndex });
       get().updateSelected();
       get().refreshLayers();
@@ -296,7 +296,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       if (obj) {
         canvas.remove(obj);
         canvas.discardActiveObject();
-        canvas.renderAll();
+        canvas.requestRenderAll();
         get().pushHistory();
         get().refreshLayers();
         get().updateSelected();
@@ -331,7 +331,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     );
     if (obj) {
       obj.visible = !obj.visible;
-      canvas.renderAll();
+      canvas.requestRenderAll();
       get().refreshLayers();
     }
   },
@@ -345,7 +345,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     if (obj) {
       obj.selectable = !obj.selectable;
       obj.evented = !obj.evented;
-      canvas.renderAll();
+      canvas.requestRenderAll();
       get().refreshLayers();
     }
   },
@@ -358,7 +358,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     );
     if (obj) {
       canvas.remove(obj);
-      canvas.renderAll();
+      canvas.requestRenderAll();
       get().pushHistory();
       get().refreshLayers();
       get().updateSelected();
@@ -373,7 +373,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     );
     if (obj) {
       canvas.setActiveObject(obj);
-      canvas.renderAll();
+      canvas.requestRenderAll();
       get().updateSelected();
     }
   },
