@@ -4,19 +4,35 @@ import { useEditorStore } from "@/store/useEditorStore";
 import { Button } from "@/components/ui/Button";
 import { Undo2, Redo2, Maximize2 } from "lucide-react";
 import { getCanvas, resetViewport } from "@/lib/canvas";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function Toolbar() {
   const { undo, redo, canUndo, canRedo, doExport, isPro } = useEditorStore();
   const [showExport, setShowExport] = useState(false);
+  const [logoUrl, setLogoUrl] = useState("");
+
+  useEffect(() => {
+    const loadLogo = () => {
+      const raw = localStorage.getItem("ipsumlogo_admin");
+      if (raw) { try { const p = JSON.parse(raw); setLogoUrl(p.logoUrl || ""); } catch { /* */ } }
+    };
+    loadLogo();
+    window.addEventListener("focus", loadLogo);
+    window.addEventListener("storage", (e) => { if (e.key === "ipsumlogo_admin") loadLogo(); });
+    return () => { window.removeEventListener("focus", loadLogo); };
+  }, []);
 
   return (
     <header className="flex items-center justify-between h-12 bg-[var(--color-bg-toolbar)] border-b border-[var(--color-border)] px-3 flex-shrink-0 z-10">
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 font-bold text-[15px] tracking-[-0.3px]">
-          <div className="w-7 h-7 bg-gradient-to-br from-[var(--color-accent)] to-purple-500 rounded-md flex items-center justify-center text-xs text-white">
-            ?
-          </div>
+          {logoUrl ? (
+            <img src={logoUrl} alt="Logo" className="w-7 h-7 rounded object-contain" />
+          ) : (
+            <div className="w-7 h-7 bg-gradient-to-br from-[var(--color-accent)] to-purple-500 rounded-md flex items-center justify-center text-xs text-white">
+              ?
+            </div>
+          )}
           <span className="hidden sm:inline">Ipsumlogo</span>
         </div>
         <div className="w-px h-6 bg-[var(--color-border)]" />
