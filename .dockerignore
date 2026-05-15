@@ -1,0 +1,12 @@
+node_modules/
+.next/
+out/
+.git/
+.gitignore
+README.md
+*.md
+AGENTS.md
+CLAUDE.md
+.env*
+.DS_Store
+mockup.html

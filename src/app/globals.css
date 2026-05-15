@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+:root {
+  --color-bg-toolbar: #1e1e1e;
+  --color-bg-sidebar: #1e1e1e;
+  --color-bg-right: #1e1e1e;
+  --color-bg-canvas: #2c2c2c;
+  --color-bg-artboard: #ffffff;
+  --color-border: #383838;
+  --color-text-primary: #e0e0e0;
+  --color-text-secondary: #b3b3b3;
+  --color-text-muted: #808080;
+  --color-accent: #6366f1;
+  --color-accent-hover: #818cf8;
+  --color-accent-bg: rgba(99, 102, 241, 0.12);
+  --color-danger: #ef4444;
+  --color-success: #22c55e;
+  --color-surface: #232323;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--color-bg-canvas);
+  color: var(--color-text-primary);
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+input, select, textarea {
+  font-family: inherit;
+}
