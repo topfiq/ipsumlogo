@@ -32,6 +32,8 @@ export default function Canvas() {
     canvas.on("object:modified", () => { pushHistory(); updateSelected(); refreshLayers(); });
     canvas.on("object:added", () => { refreshLayers(); });
     canvas.on("object:removed", () => { refreshLayers(); });
+    canvas.on("text:editing:entered", () => { /* editing started */ });
+    canvas.on("text:editing:exited", () => { pushHistory(); updateSelected(); refreshLayers(); });
 
     setTimeout(() => {
       zoomToFit(canvas, canvasState.artboardWidth, canvasState.artboardHeight);

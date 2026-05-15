@@ -189,7 +189,7 @@ export function addPolygon(canvas: ICanvas, sides = 6) {
 }
 
 export function addText(canvas: ICanvas, textStr = "Text", opts?: Record<string, unknown>) {
-  const text = new Textbox(textStr, { left: 100, top: 100, fontSize: 48, fontFamily: "Inter", fontWeight: "bold", fill: "#1e1e1e", width: 300, textAlign: "center", editable: false, ...opts });
+  const text = new Textbox(textStr, { left: 100, top: 100, fontSize: 48, fontFamily: "Inter", fontWeight: "bold", fill: "#1e1e1e", width: 300, textAlign: "center", ...opts });
   canvas.add(text);
   canvas.setActiveObject(text);
   canvas.renderAll();

@@ -27,8 +27,8 @@ export function RightPanel() {
   const [gradientOn, setGradientOn] = useState(false);
   const [gradientColor1, setGradientColor1] = useState("#6366f1");
   const [gradientColor2, setGradientColor2] = useState("#8b5cf6");
-  const [showGradientPicker1, setShowGradientPicker1] = useState(false);
-  const [showGradientPicker2, setShowGradientPicker2] = useState(false);
+  const [showGradPicker1, setShowGradPicker1] = useState(false);
+  const [showGradPicker2, setShowGradPicker2] = useState(false);
 
   const hasSelection = !!transform;
 
@@ -155,29 +155,33 @@ export function RightPanel() {
                 <button
                   className="w-7 h-7 rounded border border-[var(--color-border)] shrink-0 cursor-pointer"
                   style={{ background: gradientColor1 }}
-                  onClick={() => { setShowGradientPicker1(!showGradientPicker1); setShowGradientPicker2(false); }}
+                  onClick={() => { setShowGradPicker1(!showGradPicker1); setShowGradPicker2(false); }}
                 />
                 <span className="text-[11px] text-[var(--color-text-muted)]">→</span>
                 <button
                   className="w-7 h-7 rounded border border-[var(--color-border)] shrink-0 cursor-pointer"
                   style={{ background: gradientColor2 }}
-                  onClick={() => { setShowGradientPicker2(!showGradientPicker2); setShowGradientPicker1(false); }}
+                  onClick={() => { setShowGradPicker2(!showGradPicker2); setShowGradPicker1(false); }}
                 />
                 <div
                   className="flex-1 h-7 rounded border border-[var(--color-border)]"
                   style={{ background: `linear-gradient(90deg, ${gradientColor1}, ${gradientColor2})` }}
                 />
               </div>
-              {showGradientPicker1 && (
-                <div className="relative z-20">
-                  <div className="fixed inset-0" onClick={() => setShowGradientPicker1(false)} />
-                  <HexColorPicker color={gradientColor1} onChange={setGradientColor1} />
+              {showGradPicker1 && (
+                <div className="relative" style={{ zIndex: 30 }}>
+                  <div className="fixed inset-0 z-20" onClick={() => setShowGradPicker1(false)} />
+                  <div style={{ position: "relative", zIndex: 31 }}>
+                    <HexColorPicker color={gradientColor1} onChange={setGradientColor1} />
+                  </div>
                 </div>
               )}
-              {showGradientPicker2 && (
-                <div className="relative z-20">
-                  <div className="fixed inset-0" onClick={() => setShowGradientPicker2(false)} />
-                  <HexColorPicker color={gradientColor2} onChange={setGradientColor2} />
+              {showGradPicker2 && (
+                <div className="relative" style={{ zIndex: 30 }}>
+                  <div className="fixed inset-0 z-20" onClick={() => setShowGradPicker2(false)} />
+                  <div style={{ position: "relative", zIndex: 31 }}>
+                    <HexColorPicker color={gradientColor2} onChange={setGradientColor2} />
+                  </div>
                 </div>
               )}
               <Button variant="outline" size="sm" className="w-full" onClick={applyGradient}>
