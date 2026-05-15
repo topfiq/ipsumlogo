@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { Toolbar } from "@/components/Editor/Toolbar";
 import { Sidebar } from "@/components/Editor/Sidebar";
 import { LeftPanel } from "@/components/Editor/LeftPanel";
-import { Canvas } from "@/components/Editor/Canvas";
 import { RightPanel } from "@/components/Editor/RightPanel";
 import { StatusBar } from "@/components/Editor/StatusBar";
 import { AdminPanel } from "@/components/Admin/LibraryPanel";
@@ -13,6 +12,7 @@ import { useEditorStore } from "@/store/useEditorStore";
 import { getStoredLicense } from "@/lib/license";
 import { preloadFonts } from "@/lib/fonts";
 import { Library } from "lucide-react";
+import Canvas from "@/components/Editor/Canvas";
 
 export default function EditorShell() {
   const [showAdmin, setShowAdmin] = useState(false);

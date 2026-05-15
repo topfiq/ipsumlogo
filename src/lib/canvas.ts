@@ -122,15 +122,7 @@ export function resetViewport(canvas: ICanvas, artboardWidth: number, artboardHe
   zoomToFit(canvas, artboardWidth, artboardHeight);
 }
 
-export function getRealZoom(canvas: ICanvas): number {
-  return canvas.getZoom();
-}
-
-export function createArtboard(
-  canvas: ICanvas,
-  width: number,
-  height: number
-): Rect {
+export function createArtboard(canvas: ICanvas, width: number, height: number): Rect {
   const artboard = new Rect({
     width,
     height,
@@ -142,12 +134,12 @@ export function createArtboard(
 
   const canvasWidth = canvas.getWidth() || 1200;
   const canvasHeight = canvas.getHeight() || 800;
-  const scale = 0.8;
+  const sc = 0.8;
   artboard.set({
-    left: (canvasWidth - width * scale) / 2,
-    top: (canvasHeight - height * scale) / 2,
-    scaleX: scale,
-    scaleY: scale,
+    left: (canvasWidth - width * sc) / 2,
+    top: (canvasHeight - height * sc) / 2,
+    scaleX: sc,
+    scaleY: sc,
   });
 
   canvas.add(artboard);
@@ -155,58 +147,32 @@ export function createArtboard(
   return artboard;
 }
 
-export function addRectangle(canvas: ICanvas, opts?: Partial<Record<string, unknown>>) {
-  const rect = new Rect({
-    left: 100,
-    top: 100,
-    width: 120,
-    height: 80,
-    fill: "#6366f1",
-    ...opts as object,
-  });
+export function addRectangle(canvas: ICanvas, opts?: Record<string, unknown>) {
+  const rect = new Rect({ left: 100, top: 100, width: 120, height: 80, fill: "#6366f1", ...opts });
   canvas.add(rect);
   canvas.setActiveObject(rect);
   canvas.renderAll();
   return rect;
 }
 
-export function addCircle(canvas: ICanvas, opts?: Partial<Record<string, unknown>>) {
-  const circle = new Circle({
-    left: 100,
-    top: 100,
-    radius: 50,
-    fill: "#6366f1",
-    ...opts as object,
-  });
+export function addCircle(canvas: ICanvas, opts?: Record<string, unknown>) {
+  const circle = new Circle({ left: 100, top: 100, radius: 50, fill: "#6366f1", ...opts });
   canvas.add(circle);
   canvas.setActiveObject(circle);
   canvas.renderAll();
   return circle;
 }
 
-export function addTriangle(canvas: ICanvas, opts?: Partial<Record<string, unknown>>) {
-  const triangle = new Triangle({
-    left: 100,
-    top: 100,
-    width: 100,
-    height: 100,
-    fill: "#6366f1",
-    ...opts as object,
-  });
+export function addTriangle(canvas: ICanvas, opts?: Record<string, unknown>) {
+  const triangle = new Triangle({ left: 100, top: 100, width: 100, height: 100, fill: "#6366f1", ...opts });
   canvas.add(triangle);
   canvas.setActiveObject(triangle);
   canvas.renderAll();
   return triangle;
 }
 
-export function addLine(canvas: ICanvas, opts?: Partial<Record<string, unknown>>) {
-  const line = new Line([50, 50, 200, 50], {
-    left: 100,
-    top: 100,
-    stroke: "#6366f1",
-    strokeWidth: 4,
-    ...opts as object,
-  });
+export function addLine(canvas: ICanvas, opts?: Record<string, unknown>) {
+  const line = new Line([50, 50, 200, 50], { left: 100, top: 100, stroke: "#6366f1", strokeWidth: 4, ...opts });
   canvas.add(line);
   canvas.setActiveObject(line);
   canvas.renderAll();
@@ -214,14 +180,8 @@ export function addLine(canvas: ICanvas, opts?: Partial<Record<string, unknown>>
 }
 
 export function addStar(canvas: ICanvas) {
-  const points = createStarPoints(5, 25, 50);
-  const star = new Polygon(points, {
-    left: 100,
-    top: 100,
-    fill: "#f59e0b",
-    originX: "center",
-    originY: "center",
-  });
+  const pts = createStarPoints(5, 25, 50);
+  const star = new Polygon(pts, { left: 100, top: 100, fill: "#f59e0b", originX: "center", originY: "center" });
   canvas.add(star);
   canvas.setActiveObject(star);
   canvas.renderAll();
@@ -229,33 +189,16 @@ export function addStar(canvas: ICanvas) {
 }
 
 export function addPolygon(canvas: ICanvas, sides = 6) {
-  const points = createPolygonPoints(sides, 50);
-  const polygon = new Polygon(points, {
-    left: 100,
-    top: 100,
-    fill: "#6366f1",
-    originX: "center",
-    originY: "center",
-  });
+  const pts = createPolygonPoints(sides, 50);
+  const polygon = new Polygon(pts, { left: 100, top: 100, fill: "#6366f1", originX: "center", originY: "center" });
   canvas.add(polygon);
   canvas.setActiveObject(polygon);
   canvas.renderAll();
   return polygon;
 }
 
-export function addText(canvas: ICanvas, textStr = "Text", opts?: Partial<Record<string, unknown>>) {
-  const text = new Textbox(textStr, {
-    left: 100,
-    top: 100,
-    fontSize: 48,
-    fontFamily: "Inter",
-    fontWeight: "bold",
-    fill: "#1e1e1e",
-    width: 300,
-    textAlign: "center",
-    editable: false,
-    ...opts as object,
-  });
+export function addText(canvas: ICanvas, textStr = "Text", opts?: Record<string, unknown>) {
+  const text = new Textbox(textStr, { left: 100, top: 100, fontSize: 48, fontFamily: "Inter", fontWeight: "bold", fill: "#1e1e1e", width: 300, textAlign: "center", editable: false, ...opts });
   canvas.add(text);
   canvas.setActiveObject(text);
   canvas.renderAll();
@@ -265,13 +208,7 @@ export function addText(canvas: ICanvas, textStr = "Text", opts?: Partial<Record
 export function addSvgShape(canvas: ICanvas, svgString: string) {
   loadSVGFromString(svgString).then(({ objects }) => {
     const filtered = objects.filter(Boolean) as FabricObject[];
-    const group = new Group(filtered, {
-      left: 100,
-      top: 100,
-      fill: "#6366f1",
-      stroke: "",
-      strokeWidth: 0,
-    });
+    const group = new Group(filtered, { left: 100, top: 100, fill: "#6366f1", stroke: "", strokeWidth: 0 });
     if (group.width && group.height) {
       const sc = Math.min(80 / group.width, 80 / group.height, 1);
       group.scaleX = sc;

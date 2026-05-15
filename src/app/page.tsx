@@ -11,7 +11,7 @@ const EditorShell = dynamic(() => import("@/components/Editor/EditorShell"), {
           className="w-10 h-10 border-2 border-t-transparent rounded-full animate-spin"
           style={{ borderColor: "#6366f1", borderTopColor: "transparent" }}
         />
-        <p className="text-sm" style={{ color: "#808080" }}>Loading editor...</p>
+        <p className="text-sm" style={{ color: "#808080" }}>Loading...</p>
       </div>
     </div>
   ),

@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { initCanvas, createArtboard, zoomToFit } from "@/lib/canvas";
 import { useEditorStore } from "@/store/useEditorStore";
 
-export function Canvas() {
+export default function Canvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const initialized = useRef(false);
   const {
