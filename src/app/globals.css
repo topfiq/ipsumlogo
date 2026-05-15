@@ -25,6 +25,16 @@ body {
   -webkit-user-select: none;
 }
 
+select {
+  color: var(--color-text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+select option {
+  background: #2a2a2a;
+  color: #e0e0e0;
+}
+
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }

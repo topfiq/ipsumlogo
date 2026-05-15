@@ -32,6 +32,7 @@ export interface ShapeProps {
   fill: string;
   stroke: string;
   strokeWidth: number;
+  strokeDashArray: number[] | null;
   opacity: number;
   cornerRadius: number;
 }

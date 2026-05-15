@@ -2,12 +2,31 @@
 
 import { useEditorStore } from "@/store/useEditorStore";
 import { getLibrary } from "@/lib/library";
-import type { LibraryShape } from "@/types";
+import { getTemplates } from "@/lib/templates";
+import type { LibraryShape, LogoTemplate } from "@/types";
 import { useMemo } from "react";
+import { getCanvas } from "@/lib/canvas";
+import { loadSVGFromString, Group, type FabricObject } from "fabric";
 
 export function LeftPanel() {
   const { doInsertShape, doInsertText, doInsertLibraryShape } = useEditorStore();
   const libraryShapes = useMemo(() => getLibrary().slice(0, 9), []);
+  const templates = useMemo(() => getTemplates(), []);
+
+  const handleLoadTemplate = (tmpl: LogoTemplate) => {
+    const canvas = getCanvas();
+    if (!canvas) return;
+    loadSVGFromString(tmpl.state).then(({ objects }) => {
+      const filtered = objects.filter(Boolean) as FabricObject[];
+      const group = new Group(filtered, { left: 200, top: 150 });
+      canvas.add(group);
+      canvas.setActiveObject(group);
+      canvas.requestRenderAll();
+      useEditorStore.getState().pushHistory();
+      useEditorStore.getState().refreshLayers();
+      useEditorStore.getState().updateSelected();
+    });
+  };
 
   return (
     <aside className="w-[240px] bg-[var(--color-bg-sidebar)] border-r border-[var(--color-border)] flex flex-col flex-shrink-0 overflow-y-auto">
@@ -74,6 +93,29 @@ export function LeftPanel() {
           ))}
         </div>
       </div>
+
+      {/* Logo Templates */}
+      {templates.length > 0 && (
+        <div className="p-3 border-b border-[var(--color-border)]">
+          <h3 className="text-[11px] font-semibold uppercase tracking-[0.5px] text-[var(--color-text-muted)] mb-2.5">
+            Logo Templates
+            <span className="font-normal text-[var(--color-text-muted)] normal-case ml-1">({templates.length})</span>
+          </h3>
+          <div className="flex flex-col gap-1">
+            {templates.map((tmpl) => (
+              <button
+                key={tmpl.id}
+                className="px-2.5 py-1.5 rounded text-xs text-[var(--color-text-secondary)] hover:bg-white/5 hover:text-[var(--color-text-primary)] border border-transparent hover:border-[var(--color-border)] transition-all text-left flex items-center gap-2"
+                onClick={() => handleLoadTemplate(tmpl)}
+                title={tmpl.name}
+              >
+                <div className="w-8 h-6 bg-white rounded flex items-center justify-center shrink-0 overflow-hidden" dangerouslySetInnerHTML={{ __html: tmpl.preview }} />
+                <span className="truncate">{tmpl.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Background */}
       <div className="p-3">

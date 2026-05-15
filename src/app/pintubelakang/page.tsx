@@ -6,11 +6,13 @@ import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { getLibrary, addToLibrary, removeFromLibrary, exportLibraryJson, importLibraryJson } from "@/lib/library";
+import { getTemplates, addTemplate, removeTemplate } from "@/lib/templates";
 import { sanitizeSvg, isValidSvg } from "@/lib/svg-sanitizer";
-import type { LibraryShape } from "@/types";
+import { loadSVGFromString, Group, type FabricObject } from "fabric";
+import type { LibraryShape, LogoTemplate } from "@/types";
 import {
   Lock, ShieldCheck, Shapes, Settings, LayoutDashboard, Upload, X, Download,
-  UploadIcon, Plus, ArrowLeft, LogOut, Save, Trash2, Eye, EyeOff,
+  UploadIcon, Plus, ArrowLeft, LogOut, Save, Trash2, Eye, EyeOff, FileImage,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -51,7 +53,7 @@ function saveAdminProfile(profile: AdminProfile) {
 /* =========== Main Page =========== */
 
 type AuthStep = "password" | "otp" | "done";
-type AdminTab = "dashboard" | "shapes" | "settings" | "security";
+type AdminTab = "dashboard" | "shapes" | "templates" | "settings" | "security";
 
 const CATEGORIES = ["All", "Geometric", "Arrows", "Nature", "Symbols", "Abstract"];
 
@@ -143,6 +145,7 @@ function AdminDashboard({ profile, onLogout, onProfileChange }: {
   const tabs: Array<{ id: AdminTab; icon: React.ReactNode; label: string }> = [
     { id: "dashboard", icon: <LayoutDashboard size={14} />, label: "Dashboard" },
     { id: "shapes", icon: <Shapes size={14} />, label: "Shapes" },
+    { id: "templates", icon: <FileImage size={14} />, label: "Templates" },
     { id: "settings", icon: <Settings size={14} />, label: "Settings" },
     { id: "security", icon: <ShieldCheck size={14} />, label: "Security" },
   ];
@@ -176,6 +179,7 @@ function AdminDashboard({ profile, onLogout, onProfileChange }: {
         <main className="flex-1 overflow-y-auto">
           {tab === "dashboard" && <DashboardTab shapes={shapes} profile={profile} />}
           {tab === "shapes" && <ShapesTab shapes={shapes} refresh={refreshShapes} />}
+          {tab === "templates" && <TemplatesTab />}
           {tab === "settings" && <SettingsTab profile={profile} onChange={onProfileChange} />}
           {tab === "security" && <SecurityTab profile={profile} onChange={onProfileChange} />}
         </main>
@@ -316,6 +320,74 @@ function ShapesTab({ shapes, refresh }: { shapes: LibraryShape[]; refresh: () =>
             </div>
           ))}
           {filtered.length === 0 && <div className="col-span-4 text-center py-16 text-xs text-[var(--color-text-muted)]">No shapes in this category.</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* =========== Templates Tab =========== */
+
+import { getCanvas } from "@/lib/canvas";
+
+function TemplatesTab() {
+  const [templates, setTemplates] = useState(() => getTemplates());
+  const [name, setName] = useState("");
+  const [svgPaste, setSvgPaste] = useState("");
+  const [error, setError] = useState("");
+
+  const refresh = () => setTemplates(getTemplates());
+
+  const handleAdd = () => {
+    setError("");
+    if (!name.trim()) { setError("Enter a template name"); return; }
+    const svg = svgPaste.trim();
+    if (!svg) { setError("Paste SVG code for the template preview"); return; }
+    if (!isValidSvg(svg)) { setError("Invalid or unsafe SVG"); return; }
+    const clean = sanitizeSvg(svg);
+    addTemplate(name.trim(), svgPaste.trim(), clean);
+    setName(""); setSvgPaste("");
+    refresh();
+  };
+
+  const handleLoadToCanvas = (tmpl: LogoTemplate) => {
+    const canvas = getCanvas();
+    if (!canvas) return;
+    loadSVGFromString(tmpl.state).then(({ objects }) => {
+      const filtered = objects.filter(Boolean) as FabricObject[];
+      const group = new Group(filtered, { left: 200, top: 150 });
+      canvas.add(group);
+      canvas.setActiveObject(group);
+      canvas.requestRenderAll();
+    });
+  };
+
+  return (
+    <div className="p-6">
+      <div className="flex gap-6">
+        <div className="w-[280px] flex flex-col gap-3">
+          <h3 className="text-[11px] font-semibold uppercase tracking-[0.5px] text-[var(--color-text-muted)]">Add Logo Template</h3>
+          <Input placeholder="Template name (e.g. 'Business Logo')" value={name} onChange={(e) => setName(e.target.value)} />
+          <p className="text-[10px] text-[var(--color-text-muted)]">Paste SVG code. This will be usable as a starting template by users.</p>
+          <textarea className="w-full h-32 bg-white/3 border border-[var(--color-border)] rounded text-[var(--color-text-secondary)] text-[11px] p-2 outline-none resize-y font-mono focus:border-[var(--color-accent)]" placeholder="Paste SVG code..." value={svgPaste} onChange={(e) => setSvgPaste(e.target.value)} />
+          {error && <p className="text-xs text-[var(--color-danger)]">{error}</p>}
+          <Button variant="primary" onClick={handleAdd}><Plus size={14} /> Add Template</Button>
+          <p className="text-xs text-[var(--color-text-muted)]">Templates appear in the editor sidebar for quick logo starting points.</p>
+        </div>
+        <div className="flex-1">
+          <div className="grid grid-cols-3 gap-3">
+            {templates.map((tmpl) => (
+              <div key={tmpl.id} className="rounded-lg border border-[var(--color-border)] bg-white/3 p-3 flex flex-col gap-2 hover:border-[var(--color-accent)] transition-all group relative">
+                <div className="w-full aspect-[2/1] bg-white rounded flex items-center justify-center p-2" dangerouslySetInnerHTML={{ __html: tmpl.preview }} />
+                <span className="text-[11px] text-[var(--color-text-secondary)] truncate">{tmpl.name}</span>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="flex-1 text-[10px]" onClick={() => handleLoadToCanvas(tmpl)}>Load</Button>
+                </div>
+                <button className="absolute top-2 right-2 w-5 h-5 rounded-full bg-[var(--color-danger)] text-white hidden group-hover:flex items-center justify-center text-[10px]" onClick={() => { removeTemplate(tmpl.id); refresh(); }}><X size={10} /></button>
+              </div>
+            ))}
+            {templates.length === 0 && <div className="col-span-3 text-center py-8 text-xs text-[var(--color-text-muted)]">No templates yet. Add one on the left.</div>}
+          </div>
         </div>
       </div>
     </div>

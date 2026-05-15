@@ -1,7 +1,7 @@
 "use client";
 
 import { useEditorStore } from "@/store/useEditorStore";
-import { MousePointer2, Type, Square, Circle, Triangle, Minus, Star, Hexagon, Shuffle } from "lucide-react";
+import { MousePointer2, Type, Square, Circle, Triangle, Minus, Star, Hexagon } from "lucide-react";
 import type { ToolType } from "@/types";
 
 const tools: Array<{ type: ToolType; icon: React.ReactNode; label: string; shortcut?: string }> = [
@@ -16,7 +16,7 @@ const tools: Array<{ type: ToolType; icon: React.ReactNode; label: string; short
 ];
 
 export function Sidebar() {
-  const { tool, setTool, doInsertShape, doInsertText, doRandomShape } = useEditorStore();
+  const { tool, setTool, doInsertShape, doInsertText } = useEditorStore();
 
   const handleClick = (type: ToolType) => {
     setTool(type);
@@ -50,14 +50,6 @@ export function Sidebar() {
       ))}
 
       <div className="w-6 h-px bg-[var(--color-border)] my-1.5" />
-
-      <button
-        className="w-9 h-9 rounded border border-dashed border-[var(--color-accent)] text-[var(--color-accent)] flex items-center justify-center hover:bg-[var(--color-accent)] hover:text-white transition-all duration-150 mt-auto mb-2"
-        onClick={doRandomShape}
-        title="Random Shape"
-      >
-        <Shuffle size={18} />
-      </button>
     </aside>
   );
 }

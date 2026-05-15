@@ -138,8 +138,9 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       fill: typeof shape.fill === "string" ? (shape.fill as string) : "#6366f1",
       stroke: typeof shape.stroke === "string" ? (shape.stroke as string) : "",
       strokeWidth: (shape.strokeWidth as number) || 0,
+      strokeDashArray: (shape.strokeDashArray as number[]) || null,
       opacity: (shape.opacity as number) || 1,
-      cornerRadius: (shape.rx as number) || 0,
+      cornerRadius: (shape.rx as number) || (shape.rx as number) || 0,
     };
 
     const text = active as unknown as Textbox;
@@ -196,8 +197,9 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     if (props.fill !== undefined) obj.set("fill", props.fill);
     if (props.stroke !== undefined) obj.set("stroke", props.stroke);
     if (props.strokeWidth !== undefined) obj.set("strokeWidth", props.strokeWidth);
+    if (props.strokeDashArray !== undefined) obj.set("strokeDashArray", props.strokeDashArray);
     if (props.opacity !== undefined) obj.set("opacity", props.opacity);
-    if (props.cornerRadius !== undefined && (obj.type === "rect" || obj.type === "rectangle")) {
+    if (props.cornerRadius !== undefined) {
       try { obj.set("rx", props.cornerRadius); obj.set("ry", props.cornerRadius); } catch {}
     }
 
