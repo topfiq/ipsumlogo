@@ -4,7 +4,7 @@ WORKDIR /app
 RUN npm config set fetch-retries 5 && npm config set fetch-timeout 120000
 
 COPY package.json package-lock.json ./
-RUN npm ci --prefer-offline || npm install
+RUN npm ci --include=dev --prefer-offline 2>&1 || npm install --include=dev 2>&1 || npm install --include=dev --registry https://registry.npmmirror.com
 
 COPY . .
 RUN npm run build
