@@ -12,7 +12,7 @@ import { Slider } from "@/components/ui/Slider";
 
 export function LeftPanel() {
   const { doInsertShape, doInsertText, doInsertLibraryShape } = useEditorStore();
-  const libraryShapes = useMemo(() => getLibrary().slice(0, 9), []);
+  const libraryShapes = useMemo(() => getLibrary(), []);
   const templates = useMemo(() => getTemplates(), []);
   const [bgColor, setBgColor] = useState("#ffffff");
   const [bgOpacity, setBgOpacity] = useState(1);
@@ -103,7 +103,7 @@ export function LeftPanel() {
           Library Shapes
           <span className="font-normal text-[var(--color-text-muted)] normal-case ml-1">({libraryShapes.length})</span>
         </h3>
-        <div className="grid grid-cols-3 gap-1.5">
+        <div className="grid grid-cols-3 gap-1.5 max-h-[300px] overflow-y-auto">
           {libraryShapes.map((shape: LibraryShape) => (
             <button
               key={shape.id}
@@ -118,27 +118,28 @@ export function LeftPanel() {
       </div>
 
       {/* Logo Templates */}
-      {templates.length > 0 && (
-        <div className="p-3 border-b border-[var(--color-border)]">
-          <h3 className="text-[11px] font-semibold uppercase tracking-[0.5px] text-[var(--color-text-muted)] mb-2.5">
-            Logo Templates
-            <span className="font-normal text-[var(--color-text-muted)] normal-case ml-1">({templates.length})</span>
-          </h3>
-          <div className="flex flex-col gap-1">
-            {templates.map((tmpl) => (
-              <button
-                key={tmpl.id}
-                className="px-2.5 py-1.5 rounded text-xs text-[var(--color-text-secondary)] hover:bg-white/5 hover:text-[var(--color-text-primary)] border border-transparent hover:border-[var(--color-border)] transition-all text-left flex items-center gap-2"
-                onClick={() => handleLoadTemplate(tmpl)}
-                title={tmpl.name}
-              >
-                <div className="w-8 h-6 bg-white rounded flex items-center justify-center shrink-0 overflow-hidden" dangerouslySetInnerHTML={{ __html: tmpl.preview }} />
-                <span className="truncate">{tmpl.name}</span>
-              </button>
-            ))}
-          </div>
+      <div className="p-3 border-b border-[var(--color-border)]">
+        <h3 className="text-[11px] font-semibold uppercase tracking-[0.5px] text-[var(--color-text-muted)] mb-2.5">
+          Logo Templates
+          <span className="font-normal text-[var(--color-text-muted)] normal-case ml-1">({templates.length})</span>
+        </h3>
+        <div className="flex flex-col gap-1 max-h-[200px] overflow-y-auto">
+          {templates.map((tmpl) => (
+            <button
+              key={tmpl.id}
+              className="px-2.5 py-1.5 rounded text-xs text-[var(--color-text-secondary)] hover:bg-white/5 hover:text-[var(--color-text-primary)] border border-transparent hover:border-[var(--color-border)] transition-all text-left flex items-center gap-2"
+              onClick={() => handleLoadTemplate(tmpl)}
+              title={tmpl.name}
+            >
+              <div className="w-8 h-6 bg-white rounded flex items-center justify-center shrink-0 overflow-hidden" dangerouslySetInnerHTML={{ __html: tmpl.preview }} />
+              <span className="truncate">{tmpl.name}</span>
+            </button>
+          ))}
+          {templates.length === 0 && (
+            <p className="text-xs text-[var(--color-text-muted)] py-2 text-center">No templates yet</p>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Background */}
       <div className="p-3">
