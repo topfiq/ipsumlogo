@@ -48,9 +48,10 @@ export function RightPanel() {
       ],
     });
     obj.set("fill", fill);
-    if (shape) updateShape({ fill: "gradient" });
-    if (text) updateText({ fill: "gradient" });
+    obj.setCoords();
     canvas.renderAll();
+    useEditorStore.getState().pushHistory();
+    useEditorStore.getState().updateSelected();
   };
 
   useEffect(() => {

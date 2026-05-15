@@ -135,8 +135,8 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     };
 
     const shapeProps: ShapeProps | null = isText ? null : {
-      fill: (shape.fill as string) || "#6366f1",
-      stroke: (shape.stroke as string) || "",
+      fill: typeof shape.fill === "string" ? (shape.fill as string) : "#6366f1",
+      stroke: typeof shape.stroke === "string" ? (shape.stroke as string) : "",
       strokeWidth: (shape.strokeWidth as number) || 0,
       opacity: (shape.opacity as number) || 1,
       cornerRadius: (shape.rx as number) || 0,
@@ -151,7 +151,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       fontStyle: (text.fontStyle as "normal" | "italic") || "normal",
       underline: !!(text).underline,
       textAlign: (text.textAlign as "left" | "center" | "right") || "center",
-      fill: (text.fill as string) || "#1e1e1e",
+      fill: typeof text.fill === "string" ? (text.fill as string) : "#1e1e1e",
       opacity: text.opacity || 1,
     } : null;
 
@@ -189,16 +189,19 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     const canvas = getCanvas();
     if (!canvas) return;
     const obj = canvas.getActiveObject();
-    if (!obj || obj.type === "textbox" || obj.type === "text") return;
+    if (!obj) return;
+    // Skip if it's a text object (handled by updateText)
+    if (obj.type === "textbox" || obj.type === "text") return;
 
     if (props.fill !== undefined) obj.set("fill", props.fill);
     if (props.stroke !== undefined) obj.set("stroke", props.stroke);
     if (props.strokeWidth !== undefined) obj.set("strokeWidth", props.strokeWidth);
     if (props.opacity !== undefined) obj.set("opacity", props.opacity);
-    if (props.cornerRadius !== undefined) {
+    if (props.cornerRadius !== undefined && (obj.type === "rect" || obj.type === "rectangle")) {
       try { obj.set("rx", props.cornerRadius); obj.set("ry", props.cornerRadius); } catch {}
     }
 
+    obj.setCoords();
     canvas.renderAll();
     get().updateSelected();
     get().pushHistory();
@@ -220,6 +223,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     if (props.fill !== undefined) obj.set("fill", props.fill);
     if (props.opacity !== undefined) obj.set("opacity", props.opacity);
 
+    obj.setCoords();
     canvas.renderAll();
     get().updateSelected();
     get().pushHistory();
