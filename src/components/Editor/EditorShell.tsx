@@ -2,17 +2,14 @@
 
 import { useEffect } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { Toolbar } from "@/components/Editor/Toolbar";
 import { Sidebar } from "@/components/Editor/Sidebar";
 import { LeftPanel } from "@/components/Editor/LeftPanel";
 import { RightPanel } from "@/components/Editor/RightPanel";
 import { StatusBar } from "@/components/Editor/StatusBar";
-import { ProBanner } from "@/components/Editor/ProBanner";
 import { useEditorStore } from "@/store/useEditorStore";
 import { getStoredLicense } from "@/lib/license";
 import { preloadFonts } from "@/lib/fonts";
-import { Library } from "lucide-react";
 
 const Canvas = dynamic(() => import("@/components/Editor/Canvas"), {
   ssr: false,
@@ -40,7 +37,6 @@ export default function EditorShell() {
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, background: "var(--color-bg-canvas)" }}>
       <Toolbar />
-      <ProBanner />
 
       <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
         <Sidebar />
@@ -50,15 +46,6 @@ export default function EditorShell() {
       </div>
 
       <StatusBar />
-
-      <Link
-        href="/admin"
-        className="fixed bottom-10 right-4 z-50 flex items-center gap-1.5 px-3 py-2 rounded-md border border-dashed border-[var(--color-accent)] bg-[var(--color-bg-toolbar)] text-[var(--color-accent)] text-xs hover:bg-[var(--color-accent)] hover:text-white transition-all shadow-lg"
-        style={{ textDecoration: "none" }}
-      >
-        <Library size={14} />
-        <span className="hidden sm:inline">Library</span>
-      </Link>
     </div>
   );
 }

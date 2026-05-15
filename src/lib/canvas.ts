@@ -129,16 +129,8 @@ export function createArtboard(canvas: ICanvas, width: number, height: number): 
     selectable: false,
     evented: false,
     name: "__artboard__",
-  });
-
-  const canvasWidth = canvas.getWidth() || 1200;
-  const canvasHeight = canvas.getHeight() || 800;
-  const sc = 0.8;
-  artboard.set({
-    left: (canvasWidth - width * sc) / 2,
-    top: (canvasHeight - height * sc) / 2,
-    scaleX: sc,
-    scaleY: sc,
+    left: 0,
+    top: 0,
   });
 
   canvas.add(artboard);

@@ -39,7 +39,7 @@ export default function Canvas() {
       refreshLayers();
       updateSelected();
       setCanvasReady(true);
-    }, 100);
+    }, 250);
 
     const onResize = () => {
       const p = el.parentElement!;
