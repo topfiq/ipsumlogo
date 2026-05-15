@@ -84,11 +84,11 @@ export function LeftPanel() {
       {/* Google Fonts */}
       <div className="p-3 border-b border-[var(--color-border)]">
         <h3 className="text-[11px] font-semibold uppercase tracking-[0.5px] text-[var(--color-text-muted)] mb-2.5">Google Fonts</h3>
-        <div className="flex flex-col gap-0.5">
-          {FONT_LIST.slice(0, 8).map((font) => (
+        <div className="flex flex-col gap-0.5 max-h-[320px] overflow-y-auto">
+          {FONT_LIST.map((font) => (
             <button
               key={font.family}
-              className="px-2.5 py-1.5 rounded text-sm text-[var(--color-text-secondary)] hover:bg-white/5 hover:text-[var(--color-text-primary)] border border-transparent hover:border-[var(--color-border)] transition-all text-left"
+              className="px-2.5 py-1.5 rounded text-xs text-[var(--color-text-secondary)] hover:bg-white/5 hover:text-[var(--color-text-primary)] border border-transparent hover:border-[var(--color-border)] transition-all text-left"
               style={{ fontFamily: font.family }}
               onClick={() => handleFontClick(font.family)}
             >

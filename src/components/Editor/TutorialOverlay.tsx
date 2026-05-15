@@ -10,37 +10,33 @@ interface Step {
   title: string;
   description: string;
   position: { top?: string; bottom?: string; left?: string; right?: string };
-  highlight?: string;
 }
 
 const steps: Step[] = [
   {
     title: "Welcome to Ipsumlogo!",
-    description: "Create beautiful logos with our free drag-and-drop editor. Let's take a quick tour.",
-    position: { top: "50%", left: "50%", right: "auto", bottom: "auto" },
+    description: "Create beautiful logos with our free drag-and-drop editor. A quick tour in 5 steps.",
+    position: { top: "50%", left: "50%" },
   },
   {
-    title: "Toolbar & Tools",
-    description: "Use the left sidebar to add shapes, text, or generate random shapes. The top toolbar has Undo, Redo, and Export.",
+    title: "Sidebar Tools",
+    description: "Left sidebar: add Text, Shapes, or click the dashed Random button for random shapes.",
     position: { top: "60px", left: "60px" },
-    highlight: ".sidebar-highlight",
   },
   {
-    title: "Canvas & Artboard",
-    description: "Drag to pan (Alt+Click), scroll to zoom. The white artboard is your logo canvas.",
-    position: { top: "40%", left: "50%" },
-    highlight: ".canvas-highlight",
+    title: "Canvas Controls",
+    description: "Scroll to zoom in/out. Hold Alt + drag to pan. Ctrl+Z to undo, Ctrl+Shift+Z to redo. Delete key removes selected object. Click and drag objects to move them.",
+    position: { top: "50%", left: "50%" },
   },
   {
-    title: "Property & Layers",
-    description: "Select any element to edit its properties on the right panel. Manage layers — reorder, hide, lock, or delete.",
+    title: "Keyboard Shortcuts",
+    description: "Ctrl+Z — Undo\nCtrl+Shift+Z / Ctrl+Y — Redo\nDelete / Backspace — Remove selected\nCtrl+Scroll — Zoom in/out\nAlt+Drag — Pan around\nHold Shift while dragging — Constrain proportions\nCtrl+A — Select all objects",
+    position: { top: "50%", left: "50%" },
+  },
+  {
+    title: "Right Panel & Layers",
+    description: "Select any object to edit its properties on the right. Manage layers: reorder, hide, lock, or delete. Toggle Gradient for gradient fills. Export as SVG, PNG, or JPG from the top toolbar.",
     position: { top: "80px", right: "20px" },
-    highlight: ".right-panel-highlight",
-  },
-  {
-    title: "Admin Library",
-    description: "Visit /pintubelakang to manage custom shapes, change settings, and configure your admin profile.",
-    position: { top: "50%", left: "50%", right: "auto", bottom: "auto" },
   },
 ];
 
@@ -82,63 +78,47 @@ export function TutorialOverlay() {
   const s = steps[step];
   if (!s) return null;
 
+  const centered = s.position.top === "50%";
+
   return (
     <>
-      {/* Backdrop */}
       <div className="fixed inset-0 bg-black/60 z-[90]" onClick={finish} />
 
-      {/* Tooltip */}
       <div
-        className="fixed z-[95] w-[320px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg shadow-2xl p-4"
+        className="fixed z-[95] w-[340px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg shadow-2xl p-4"
         style={{
           top: s.position.top,
           bottom: s.position.bottom,
           left: s.position.left,
           right: s.position.right,
-          transform: s.position.top === "50%" ? "translate(-50%, -50%)" : undefined,
+          transform: centered ? "translate(-50%, -50%)" : undefined,
         }}
       >
         <div className="flex items-center justify-between mb-3">
           <span className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-[0.5px]">
             Step {step + 1} of {TOTAL_STEPS}
           </span>
-          <button onClick={finish} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">
-            <X size={14} />
-          </button>
+          <button onClick={finish} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"><X size={14} /></button>
         </div>
 
         <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-1.5">{s.title}</h3>
-        <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed mb-4">{s.description}</p>
+        <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed mb-4 whitespace-pre-line">{s.description}</p>
 
         <div className="flex items-center justify-between">
           <div className="flex gap-1">
             {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-              <Circle
-                key={i}
-                size={8}
-                fill={i === step ? "var(--color-accent)" : "none"}
-                className={i === step ? "text-[var(--color-accent)]" : "text-[var(--color-text-muted)]"}
-              />
+              <Circle key={i} size={8} fill={i === step ? "var(--color-accent)" : "none"}
+                className={i === step ? "text-[var(--color-accent)]" : "text-[var(--color-text-muted)]"} />
             ))}
           </div>
           <div className="flex gap-2">
             {step > 0 && (
-              <button
-                onClick={prev}
-                className="flex items-center gap-1 px-2 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
-              >
+              <button onClick={prev} className="flex items-center gap-1 px-2 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">
                 <ChevronLeft size={12} /> Back
               </button>
             )}
-            <button
-              onClick={next}
-              className="flex items-center gap-1 px-3 py-1 rounded text-xs bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-hover)] transition-colors"
-            >
-              {step < TOTAL_STEPS - 1 ? (
-                <>Next <ChevronRight size={12} /></>
-              ) : (
-                "Finish"
-              )}
+            <button onClick={next} className="flex items-center gap-1 px-3 py-1 rounded text-xs bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-hover)] transition-colors">
+              {step < TOTAL_STEPS - 1 ? <><ChevronRight size={12} /> Next</> : "Got it!"}
             </button>
           </div>
         </div>
