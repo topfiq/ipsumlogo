@@ -1,16 +1,48 @@
 import type { LogoTemplate } from "@/types";
 
-const TEMPLATES_KEY = "ipsumlogo_templates";
+let templatesCache: LogoTemplate[] | null = null;
+let publicLoaded = false;
+const isClient = typeof window !== "undefined";
+
+export async function loadTemplates(): Promise<LogoTemplate[]> {
+  if (templatesCache && publicLoaded) return templatesCache;
+
+  const allTemplates: LogoTemplate[] = [];
+
+  try {
+    const res = await fetch("/library/templates.json");
+    if (res.ok) {
+      const publicData: LogoTemplate[] = await res.json();
+      allTemplates.push(...publicData);
+    }
+  } catch { /* ignore */ }
+  publicLoaded = true;
+
+  if (isClient) {
+    const raw = localStorage.getItem("ipsumlogo_templates");
+    if (raw) {
+      try {
+        const localData: LogoTemplate[] = JSON.parse(raw);
+        const publicIds = new Set(allTemplates.map((t) => t.id));
+        for (const t of localData) {
+          if (!publicIds.has(t.id)) allTemplates.push(t);
+        }
+      } catch { /* ignore */ }
+    }
+  }
+
+  templatesCache = allTemplates;
+  return allTemplates;
+}
 
 export function getTemplates(): LogoTemplate[] {
-  if (typeof window === "undefined") return [];
-  const raw = localStorage.getItem(TEMPLATES_KEY);
-  if (raw) { try { return JSON.parse(raw); } catch { return []; } }
-  return [];
+  return templatesCache || [];
 }
 
 export function saveTemplates(templates: LogoTemplate[]) {
-  localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates));
+  if (!isClient) return;
+  templatesCache = templates;
+  localStorage.setItem("ipsumlogo_templates", JSON.stringify(templates));
 }
 
 export function addTemplate(name: string, stateJson: string, previewSvg: string): LogoTemplate {
@@ -23,4 +55,8 @@ export function addTemplate(name: string, stateJson: string, previewSvg: string)
 
 export function removeTemplate(id: string) {
   saveTemplates(getTemplates().filter((t) => t.id !== id));
+}
+
+export function initTemplates(): Promise<LogoTemplate[]> {
+  return loadTemplates();
 }

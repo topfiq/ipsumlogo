@@ -1,8 +1,8 @@
 "use client";
 
 import { useEditorStore } from "@/store/useEditorStore";
-import { getLibrary } from "@/lib/library";
-import { getTemplates } from "@/lib/templates";
+import { initLibrary, getLibrary } from "@/lib/library";
+import { initTemplates, getTemplates } from "@/lib/templates";
 import type { LibraryShape, LogoTemplate } from "@/types";
 import { useEffect, useState, useCallback } from "react";
 import { getCanvas } from "@/lib/canvas";
@@ -22,6 +22,8 @@ export function LeftPanel() {
 
   useEffect(() => {
     refreshData();
+    initLibrary().then(refreshData);
+    initTemplates().then(refreshData);
     const onFocus = () => refreshData();
     const onStorage = (e: StorageEvent) => {
       if (e.key === "ipsumlogo_library" || e.key === "ipsumlogo_templates") refreshData();

@@ -236,6 +236,32 @@ function DashboardTab({ shapes, profile }: { shapes: LibraryShape[]; profile: Ad
           <div><span className="text-[var(--color-text-muted)]">Onesender:</span> <span className="text-[var(--color-text-primary)]">{profile.onesenderUrl ? "Configured" : "Not set"}</span></div>
         </div>
       </div>
+
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-4 mt-4">
+        <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] mb-2 uppercase tracking-[0.5px]">Publish to Users</h3>
+        <p className="text-xs text-[var(--color-text-muted)] leading-relaxed mb-3">
+          Shapes and templates you upload are stored locally. To share with all users, export and update the public JSON files, then redeploy.
+        </p>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm" onClick={() => {
+            const json = exportLibraryJson();
+            const blob = new Blob([json], { type: "application/json" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob); a.download = "shapes.json"; a.click();
+            URL.revokeObjectURL(a.href);
+          }}><Download size={12} /> Export Shapes</Button>
+          <Button variant="outline" size="sm" onClick={() => {
+            const json = JSON.stringify(getTemplates(), null, 2);
+            const blob = new Blob([json], { type: "application/json" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob); a.download = "templates.json"; a.click();
+            URL.revokeObjectURL(a.href);
+          }}><Download size={12} /> Export Templates</Button>
+        </div>
+        <p className="text-[10px] text-[var(--color-text-muted)] mt-3">
+          Steps: 1) Export the JSON. 2) Replace <code className="text-[var(--color-accent)]">public/library/shapes.json</code> / <code className="text-[var(--color-accent)]">public/library/templates.json</code> in the repo. 3) <code>git push</code> — auto-deploy. All users see the updated library.
+        </p>
+      </div>
     </div>
   );
 }

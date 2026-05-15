@@ -1,32 +1,57 @@
 import type { LibraryShape } from "@/types";
-import defaultShapes from "@/data/default-shapes.json";
 
 let libraryCache: LibraryShape[] | null = null;
-
+let publicShapesLoaded = false;
 const isClient = typeof window !== "undefined";
 
 export function getDefaultShapes(): LibraryShape[] {
-  return defaultShapes as LibraryShape[];
+  return libraryCache || [];
+}
+
+export async function loadLibrary(): Promise<LibraryShape[]> {
+  if (libraryCache && publicShapesLoaded) return libraryCache;
+
+  const allShapes: LibraryShape[] = [];
+
+  // 1. Load public published shapes from server
+  try {
+    const url = "/library/shapes.json";
+    const res = await fetch(url);
+    if (res.ok) {
+      const publicShapes: LibraryShape[] = await res.json();
+      allShapes.push(...publicShapes);
+    }
+  } catch { /* ignore network errors */ }
+  publicShapesLoaded = true;
+
+  // 2. Load admin draft shapes from localStorage (not yet published)
+  if (isClient) {
+    const raw = localStorage.getItem("ipsumlogo_library");
+    if (raw) {
+      try {
+        const localShapes: LibraryShape[] = JSON.parse(raw);
+        const publicIds = new Set(allShapes.map((s) => s.id));
+        for (const shape of localShapes) {
+          if (!publicIds.has(shape.id)) allShapes.push(shape);
+        }
+      } catch { /* ignore */ }
+    }
+  }
+
+  // 3. If still empty, use bundled defaults
+  if (allShapes.length === 0 && isClient) {
+    try {
+      const mod = await import("@/data/default-shapes.json");
+      allShapes.push(...(mod.default as LibraryShape[]));
+    } catch { /* ignore */ }
+  }
+
+  libraryCache = allShapes;
+  return allShapes;
 }
 
 export function getLibrary(): LibraryShape[] {
-  if (!isClient) return getDefaultShapes();
-
-  if (libraryCache) return libraryCache;
-
-  const stored = localStorage.getItem("ipsumlogo_library");
-  if (stored) {
-    try {
-      libraryCache = JSON.parse(stored);
-      return libraryCache!;
-    } catch {
-      libraryCache = getDefaultShapes();
-    }
-  } else {
-    libraryCache = getDefaultShapes();
-  }
-
-  return libraryCache;
+  return libraryCache || [];
 }
 
 export function saveLibrary(shapes: LibraryShape[]) {
@@ -37,11 +62,7 @@ export function saveLibrary(shapes: LibraryShape[]) {
 
 export function addToLibrary(shape: Omit<LibraryShape, "id" | "createdAt">) {
   const library = getLibrary();
-  const newShape: LibraryShape = {
-    ...shape,
-    id: crypto.randomUUID(),
-    createdAt: Date.now(),
-  };
+  const newShape: LibraryShape = { ...shape, id: crypto.randomUUID(), createdAt: Date.now() };
   library.push(newShape);
   saveLibrary(library);
   return newShape;
@@ -50,17 +71,6 @@ export function addToLibrary(shape: Omit<LibraryShape, "id" | "createdAt">) {
 export function removeFromLibrary(id: string) {
   const library = getLibrary().filter((s) => s.id !== id);
   saveLibrary(library);
-}
-
-export function getLibraryByCategory(): Map<string, LibraryShape[]> {
-  const library = getLibrary();
-  const map = new Map<string, LibraryShape[]>();
-  library.forEach((shape) => {
-    const cat = shape.category || "Uncategorized";
-    if (!map.has(cat)) map.set(cat, []);
-    map.get(cat)!.push(shape);
-  });
-  return map;
 }
 
 export function exportLibraryJson(): string {
@@ -73,7 +83,9 @@ export function importLibraryJson(jsonString: string): boolean {
     if (!Array.isArray(data)) return false;
     saveLibrary(data);
     return true;
-  } catch {
-    return false;
-  }
+  } catch { return false; }
+}
+
+export function initLibrary(): Promise<LibraryShape[]> {
+  return loadLibrary();
 }
