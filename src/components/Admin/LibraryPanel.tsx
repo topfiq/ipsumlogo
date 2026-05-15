@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/Input";
 import { getLibrary, addToLibrary, removeFromLibrary, exportLibraryJson, importLibraryJson } from "@/lib/library";
 import { sanitizeSvg, isValidSvg } from "@/lib/svg-sanitizer";
 import type { LibraryShape } from "@/types";
-import { Upload, X, Download, UploadIcon, Plus } from "lucide-react";
+import { Upload, X, Download, UploadIcon, Plus, Lock } from "lucide-react";
+
+const ADMIN_PASSWORD = "ipsum2025";
 
 interface AdminPanelProps {
   open: boolean;
@@ -22,10 +24,30 @@ export function AdminPanel({ open, onClose }: AdminPanelProps) {
   const [svgPaste, setSvgPaste] = useState("");
   const [category, setCategory] = useState("Geometric");
   const [error, setError] = useState("");
+  const [authenticated, setAuthenticated] = useState(false);
+  const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState("");
 
   const refreshShapes = useCallback(() => {
     setShapes(getLibrary());
   }, []);
+
+  const handleLogin = () => {
+    if (password === ADMIN_PASSWORD) {
+      setAuthenticated(true);
+      setAuthError("");
+      setPassword("");
+    } else {
+      setAuthError("Incorrect password");
+    }
+  };
+
+  const handleClose = () => {
+    setAuthenticated(false);
+    setPassword("");
+    setAuthError("");
+    onClose();
+  };
 
   const handleAddShape = () => {
     setError("");
@@ -95,8 +117,41 @@ export function AdminPanel({ open, onClose }: AdminPanelProps) {
 
   if (!open) return null;
 
+  if (!authenticated) {
+    return (
+      <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center" onClick={handleClose}>
+        <div className="w-[360px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border)]">
+            <h2 className="font-semibold text-[15px] flex items-center gap-2">
+              <Lock size={16} className="text-[var(--color-accent)]" /> Admin Access
+            </h2>
+            <button className="w-7 h-7 rounded hover:bg-white/5 flex items-center justify-center text-[var(--color-text-muted)]" onClick={handleClose}>
+              <X size={16} />
+            </button>
+          </div>
+          <div className="p-4 flex flex-col gap-3">
+            <p className="text-sm text-[var(--color-text-secondary)]">Enter password to manage shape library.</p>
+            <Input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleLogin(); }}
+              className="w-full h-9"
+            />
+            {authError && <p className="text-xs text-[var(--color-danger)]">{authError}</p>}
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={handleClose}>Cancel</Button>
+              <Button variant="primary" className="flex-1" onClick={handleLogin}>Login</Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center" onClick={handleClose}>
       <div
         className="w-[700px] max-h-[80vh] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg flex flex-col overflow-hidden shadow-2xl"
         onClick={(e) => e.stopPropagation()}
@@ -106,7 +161,7 @@ export function AdminPanel({ open, onClose }: AdminPanelProps) {
           <h2 className="font-semibold text-[15px]">Manage Shape Library</h2>
           <div className="flex items-center gap-2">
             <span className="text-[11px] text-[var(--color-text-muted)]">Admin Panel</span>
-            <button className="w-7 h-7 rounded hover:bg-white/5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] flex items-center justify-center" onClick={onClose}>
+            <button className="w-7 h-7 rounded hover:bg-white/5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] flex items-center justify-center" onClick={handleClose}>
               <X size={18} />
             </button>
           </div>
@@ -207,7 +262,7 @@ export function AdminPanel({ open, onClose }: AdminPanelProps) {
             <Button variant="outline" size="sm" onClick={handleImport}>
               <UploadIcon size={12} /> Import
             </Button>
-            <Button variant="primary" size="sm" onClick={onClose}>Done</Button>
+            <Button variant="primary" size="sm" onClick={handleClose}>Done</Button>
           </div>
         </div>
       </div>
