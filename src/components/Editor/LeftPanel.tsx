@@ -4,16 +4,32 @@ import { useEditorStore } from "@/store/useEditorStore";
 import { getLibrary } from "@/lib/library";
 import { getTemplates } from "@/lib/templates";
 import type { LibraryShape, LogoTemplate } from "@/types";
-import { useMemo, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getCanvas } from "@/lib/canvas";
 import { loadSVGFromString, Group, type FabricObject } from "fabric";
 import { HexColorPicker } from "react-colorful";
 import { Slider } from "@/components/ui/Slider";
 
 export function LeftPanel() {
+  const [libraryShapes, setLibraryShapes] = useState<LibraryShape[]>([]);
+  const [templates, setTemplates] = useState<LogoTemplate[]>([]);
   const { doInsertShape, doInsertText, doInsertLibraryShape } = useEditorStore();
-  const libraryShapes = useMemo(() => getLibrary(), []);
-  const templates = useMemo(() => getTemplates(), []);
+
+  const refreshData = useCallback(() => {
+    setLibraryShapes(getLibrary());
+    setTemplates(getTemplates());
+  }, []);
+
+  useEffect(() => {
+    refreshData();
+    const onFocus = () => refreshData();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "ipsumlogo_library" || e.key === "ipsumlogo_templates") refreshData();
+    };
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("storage", onStorage);
+    return () => { window.removeEventListener("focus", onFocus); window.removeEventListener("storage", onStorage); };
+  }, [refreshData]);
   const [bgColor, setBgColor] = useState("#ffffff");
   const [bgOpacity, setBgOpacity] = useState(1);
   const [showBgPicker, setShowBgPicker] = useState(false);
