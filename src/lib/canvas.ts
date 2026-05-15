@@ -29,7 +29,6 @@ export function initCanvas(
   canvasInstance = new Canvas(el, {
     width: options.width,
     height: options.height,
-    backgroundColor: "#2c2c2c",
     selection: true,
     preserveObjectStacking: true,
   });

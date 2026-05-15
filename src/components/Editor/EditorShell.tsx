@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { Toolbar } from "@/components/Editor/Toolbar";
 import { Sidebar } from "@/components/Editor/Sidebar";
 import { LeftPanel } from "@/components/Editor/LeftPanel";
 import { RightPanel } from "@/components/Editor/RightPanel";
 import { StatusBar } from "@/components/Editor/StatusBar";
-import { AdminPanel } from "@/components/Admin/LibraryPanel";
 import { ProBanner } from "@/components/Editor/ProBanner";
 import { useEditorStore } from "@/store/useEditorStore";
 import { getStoredLicense } from "@/lib/license";
@@ -17,14 +17,13 @@ import { Library } from "lucide-react";
 const Canvas = dynamic(() => import("@/components/Editor/Canvas"), {
   ssr: false,
   loading: () => (
-    <main className="flex-1 bg-[#2c2c2c] flex items-center justify-center">
+    <main style={{ flex: 1, background: "var(--color-bg-canvas)", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#6366f1", borderTopColor: "transparent" }} />
     </main>
   ),
 });
 
 export default function EditorShell() {
-  const [showAdmin, setShowAdmin] = useState(false);
   const { setPro, setLicenseEmail, setWatermark } = useEditorStore();
 
   useEffect(() => {
@@ -39,11 +38,11 @@ export default function EditorShell() {
   }, []);
 
   return (
-    <div className="flex flex-col" style={{ flex: 1, minHeight: 0, background: "var(--color-bg-canvas)" }}>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, background: "var(--color-bg-canvas)" }}>
       <Toolbar />
       <ProBanner />
 
-      <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
+      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
         <Sidebar />
         <LeftPanel />
         <Canvas />
@@ -51,14 +50,15 @@ export default function EditorShell() {
       </div>
 
       <StatusBar />
-      <button
+
+      <Link
+        href="/admin"
         className="fixed bottom-10 right-4 z-50 flex items-center gap-1.5 px-3 py-2 rounded-md border border-dashed border-[var(--color-accent)] bg-[var(--color-bg-toolbar)] text-[var(--color-accent)] text-xs hover:bg-[var(--color-accent)] hover:text-white transition-all shadow-lg"
-        onClick={() => setShowAdmin(true)}
+        style={{ textDecoration: "none" }}
       >
         <Library size={14} />
         <span className="hidden sm:inline">Library</span>
-      </button>
-      <AdminPanel open={showAdmin} onClose={() => setShowAdmin(false)} />
+      </Link>
     </div>
   );
 }
