@@ -1,8 +1,10 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+RUN npm config set fetch-retries 5 && npm config set fetch-timeout 120000
+
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --prefer-offline || npm install
 
 COPY . .
 RUN npm run build
