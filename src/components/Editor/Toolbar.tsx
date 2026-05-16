@@ -52,7 +52,7 @@ export function Toolbar() {
               ?
             </div>
           )}
-          <span className="hidden sm:inline">{brandName}</span>
+          {!logoUrl && <span className="hidden sm:inline">{brandName}</span>}
         </div>
         <div className="w-px h-6 bg-[var(--color-border)]" />
         <div className="flex items-center gap-1">

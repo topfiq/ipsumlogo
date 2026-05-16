@@ -522,7 +522,7 @@ function SettingsTab({ profile, onChange }: { profile: AdminProfile; onChange: (
       </div>
       <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-4 flex flex-col gap-3 mt-4">
         <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-[0.5px]">Profile</h3>
-        <LabelInput label="Admin Name" value={name} onChange={setName} />
+        <LabelInput label="Brand Name (shown in editor header)" value={name} onChange={setName} />
         <LabelInput label="Email" value={email} onChange={setEmail} type="email" />
         <LabelInput label="Admin ID" value={adminId} onChange={setAdminId} />
       </div>
