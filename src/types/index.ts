@@ -44,7 +44,9 @@ export interface TextProps {
   fontWeight: number | string;
   fontStyle: "normal" | "italic";
   underline: boolean;
-  textAlign: "left" | "center" | "right";
+  lineHeight: number;
+  charSpacing: number;
+  textAlign: "left" | "center" | "right" | "justify";
   fill: string;
   opacity: number;
 }

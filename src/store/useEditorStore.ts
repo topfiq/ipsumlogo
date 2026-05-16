@@ -151,6 +151,8 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       fontWeight: text.fontWeight || "bold",
       fontStyle: (text.fontStyle as "normal" | "italic") || "normal",
       underline: !!(text).underline,
+      lineHeight: (text.lineHeight as number) || 1.2,
+      charSpacing: (text.charSpacing as number) || 0,
       textAlign: (text.textAlign as "left" | "center" | "right") || "center",
       fill: typeof text.fill === "string" ? (text.fill as string) : "#1e1e1e",
       opacity: text.opacity || 1,
@@ -221,6 +223,8 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     if (props.fontWeight !== undefined) obj.set("fontWeight", String(props.fontWeight));
     if (props.fontStyle !== undefined) obj.set("fontStyle", props.fontStyle);
     if (props.underline !== undefined) obj.set("underline", props.underline);
+    if (props.lineHeight !== undefined) obj.set("lineHeight", props.lineHeight);
+    if (props.charSpacing !== undefined) obj.set("charSpacing", props.charSpacing);
     if (props.textAlign !== undefined) obj.set("textAlign", props.textAlign);
     if (props.fill !== undefined) obj.set("fill", props.fill);
     if (props.opacity !== undefined) obj.set("opacity", props.opacity);

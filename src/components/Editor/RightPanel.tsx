@@ -204,23 +204,57 @@ export function RightPanel() {
       {/* Typography */}
       {text && (
         <div className="p-3 border-b border-[var(--color-border)]">
-          <h3 className="text-[11px] font-semibold uppercase tracking-[0.5px] text-[var(--color-text-muted)] mb-2">Typography</h3>
-          <div className="flex flex-col gap-1.5">
+          <h3 className="text-[11px] font-semibold uppercase tracking-[0.5px] text-[var(--color-text-muted)] mb-2">Text</h3>
+          <div className="flex flex-col gap-2">
+            {/* Content textarea */}
+            <textarea
+              className="w-full h-16 bg-white/5 border border-[var(--color-border)] rounded text-[var(--color-text-primary)] text-xs p-2 outline-none resize-none focus:border-[var(--color-accent)]"
+              value={text.content}
+              onChange={(e) => updateText({ content: e.target.value })}
+            />
+
+            {/* Font family */}
             <Select value={text.fontFamily} onChange={(e) => updateText({ fontFamily: e.target.value })} className="w-full h-7 text-xs bg-white/10 text-[var(--color-text-primary)]">
-              {FONT_LIST.map((f) => (<option key={f.family} value={f.family} className="bg-[#333] text-[#e0e0e0]">{f.family}</option>))}
+              {FONT_LIST.slice(0, 30).map((f) => (<option key={f.family} value={f.family} className="bg-[#333] text-[#e0e0e0]">{f.family}</option>))}
             </Select>
-            <div className="flex gap-1">
-              <Input value={text.fontWeight} onChange={(e) => updateText({ fontWeight: e.target.value })} className="flex-1" placeholder="700" />
-              <Input value={text.fontSize} onChange={(e) => updateText({ fontSize: Number(e.target.value) })} className="flex-1" placeholder="48" />
+
+            {/* Font weight + size */}
+            <div className="flex gap-1.5">
+              <Select value={String(text.fontWeight)} onChange={(e) => updateText({ fontWeight: e.target.value })} className="flex-1 h-7 text-xs bg-white/10 text-[var(--color-text-primary)]">
+                <option value="100" className="bg-[#333] text-[#e0e0e0]">Thin</option>
+                <option value="200" className="bg-[#333] text-[#e0e0e0]">Extra Light</option>
+                <option value="300" className="bg-[#333] text-[#e0e0e0]">Light</option>
+                <option value="400" className="bg-[#333] text-[#e0e0e0]">Regular</option>
+                <option value="500" className="bg-[#333] text-[#e0e0e0]">Medium</option>
+                <option value="600" className="bg-[#333] text-[#e0e0e0]">Semi Bold</option>
+                <option value="700" className="bg-[#333] text-[#e0e0e0]">Bold</option>
+                <option value="800" className="bg-[#333] text-[#e0e0e0]">Extra Bold</option>
+                <option value="900" className="bg-[#333] text-[#e0e0e0]">Black</option>
+              </Select>
+              <Input value={text.fontSize} onChange={(e) => updateText({ fontSize: Number(e.target.value) })} className="w-16 text-center" />
             </div>
-            <div className="flex gap-1">
-              <Button size="icon" variant={text.fontWeight === "bold" ? "primary" : "outline"} onClick={() => updateText({ fontWeight: text.fontWeight === "bold" ? "normal" : "bold" })}><Bold size={14} /></Button>
-              <Button size="icon" variant={text.fontStyle === "italic" ? "primary" : "outline"} onClick={() => updateText({ fontStyle: text.fontStyle === "italic" ? "normal" : "italic" })}><Italic size={14} /></Button>
-              <Button size="icon" variant={text.underline ? "primary" : "outline"} onClick={() => updateText({ underline: !text.underline })}><Underline size={14} /></Button>
-              <div className="flex-1" />
-              <Button size="icon" variant={text.textAlign === "left" ? "primary" : "outline"} onClick={() => updateText({ textAlign: "left" })}><AlignLeft size={14} /></Button>
-              <Button size="icon" variant={text.textAlign === "center" ? "primary" : "outline"} onClick={() => updateText({ textAlign: "center" })}><AlignCenter size={14} /></Button>
-              <Button size="icon" variant={text.textAlign === "right" ? "primary" : "outline"} onClick={() => updateText({ textAlign: "right" })}><AlignRight size={14} /></Button>
+
+            {/* Line height + Letter spacing */}
+            <div className="flex gap-1.5">
+              <div className="flex-1 flex items-center gap-1">
+                <span className="text-[10px] text-[var(--color-text-muted)]">↕</span>
+                <Input type="number" step="0.1" value={text.lineHeight} onChange={(e) => updateText({ lineHeight: Number(e.target.value) })} className="flex-1 text-center" />
+              </div>
+              <div className="flex-1 flex items-center gap-1">
+                <span className="text-[10px] text-[var(--color-text-muted)]">↔</span>
+                <Input type="number" step="1" value={text.charSpacing} onChange={(e) => updateText({ charSpacing: Number(e.target.value) })} className="flex-1 text-center" />
+              </div>
+            </div>
+
+            {/* Style buttons + Alignment */}
+            <div className="flex items-center gap-0.5">
+              <Button size="icon" variant={text.fontWeight === "bold" || String(text.fontWeight) === "700" ? "primary" : "outline"} onClick={() => updateText({ fontWeight: String(text.fontWeight) === "700" ? "400" : "700" })}><Bold size={13} /></Button>
+              <Button size="icon" variant={text.fontStyle === "italic" ? "primary" : "outline"} onClick={() => updateText({ fontStyle: text.fontStyle === "italic" ? "normal" : "italic" })}><Italic size={13} /></Button>
+              <Button size="icon" variant={text.underline ? "primary" : "outline"} onClick={() => updateText({ underline: !text.underline })}><Underline size={13} /></Button>
+              <div className="w-px h-5 bg-[var(--color-border)] mx-1" />
+              <Button size="icon" variant={text.textAlign === "left" ? "primary" : "outline"} onClick={() => updateText({ textAlign: "left" })}><AlignLeft size={13} /></Button>
+              <Button size="icon" variant={text.textAlign === "center" ? "primary" : "outline"} onClick={() => updateText({ textAlign: "center" })}><AlignCenter size={13} /></Button>
+              <Button size="icon" variant={text.textAlign === "right" ? "primary" : "outline"} onClick={() => updateText({ textAlign: "right" })}><AlignRight size={13} /></Button>
             </div>
           </div>
         </div>
