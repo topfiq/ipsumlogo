@@ -240,26 +240,36 @@ function DashboardTab({ shapes, profile }: { shapes: LibraryShape[]; profile: Ad
       <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-4 mt-4">
         <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] mb-2 uppercase tracking-[0.5px]">Publish to Users</h3>
         <p className="text-xs text-[var(--color-text-muted)] leading-relaxed mb-3">
-          Shapes and templates you upload are stored locally. To share with all users, export and update the public JSON files, then redeploy.
+          Data is stored locally. To share with all users, export the JSON files below, replace them in the repo, and redeploy.
         </p>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap mb-2">
           <Button variant="outline" size="sm" onClick={() => {
             const json = exportLibraryJson();
             const blob = new Blob([json], { type: "application/json" });
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob); a.download = "shapes.json"; a.click();
             URL.revokeObjectURL(a.href);
-          }}><Download size={12} /> Export Shapes</Button>
+          }}><Download size={12} /> Shapes JSON</Button>
           <Button variant="outline" size="sm" onClick={() => {
             const json = JSON.stringify(getTemplates(), null, 2);
             const blob = new Blob([json], { type: "application/json" });
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob); a.download = "templates.json"; a.click();
             URL.revokeObjectURL(a.href);
-          }}><Download size={12} /> Export Templates</Button>
+          }}><Download size={12} /> Templates JSON</Button>
+          <Button variant="outline" size="sm" onClick={() => {
+            const data = { name: profile.name || "Ipsumlogo", logoUrl: profile.logoUrl || "" };
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: "application/json" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob); a.download = "settings.json"; a.click();
+            URL.revokeObjectURL(a.href);
+          }}><Download size={12} /> Settings JSON</Button>
         </div>
-        <p className="text-[10px] text-[var(--color-text-muted)] mt-3">
-          Steps: 1) Export the JSON. 2) Replace <code className="text-[var(--color-accent)]">public/library/shapes.json</code> / <code className="text-[var(--color-accent)]">public/library/templates.json</code> in the repo. 3) <code>git push</code> — auto-deploy. All users see the updated library.
+        <p className="text-[10px] text-[var(--color-text-muted)]">
+          <strong>Step 1:</strong> Export files above.<br />
+          <strong>Step 2:</strong> Replace in repo: <code className="text-[var(--color-accent)]">public/library/shapes.json</code>, <code className="text-[var(--color-accent)]">public/library/templates.json</code>, <code className="text-[var(--color-accent)]">public/settings.json</code><br />
+           <strong>Step 3:</strong> <code className="text-[var(--color-accent)]">git add . && git commit -m &quot;publish&quot; && git push</code> — Coolify auto-deploys. All users see the update.
         </p>
       </div>
     </div>

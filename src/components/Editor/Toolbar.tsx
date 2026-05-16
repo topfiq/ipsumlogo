@@ -10,16 +10,27 @@ export function Toolbar() {
   const { undo, redo, canUndo, canRedo, doExport, isPro } = useEditorStore();
   const [showExport, setShowExport] = useState(false);
   const [logoUrl, setLogoUrl] = useState("");
+  const [brandName, setBrandName] = useState("Ipsumlogo");
 
   useEffect(() => {
-    const loadLogo = () => {
+    const loadLogo = async () => {
+      try {
+        const res = await fetch("/settings.json");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.logoUrl) setLogoUrl(data.logoUrl);
+          if (data.name) setBrandName(data.name);
+        }
+      } catch { /* */ }
       const raw = localStorage.getItem("ipsumlogo_admin");
-      if (raw) { try { const p = JSON.parse(raw); setLogoUrl(p.logoUrl || ""); } catch { /* */ } }
+      if (raw) {
+        try { const p = JSON.parse(raw); if (!logoUrl && p.logoUrl) setLogoUrl(p.logoUrl); } catch { /* */ }
+      }
     };
     loadLogo();
     window.addEventListener("focus", loadLogo);
-    window.addEventListener("storage", (e) => { if (e.key === "ipsumlogo_admin") loadLogo(); });
     return () => { window.removeEventListener("focus", loadLogo); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -33,7 +44,7 @@ export function Toolbar() {
               ?
             </div>
           )}
-          <span className="hidden sm:inline">Ipsumlogo</span>
+          <span className="hidden sm:inline">{brandName}</span>
         </div>
         <div className="w-px h-6 bg-[var(--color-border)]" />
         <div className="flex items-center gap-1">

@@ -21,7 +21,6 @@ export function LeftPanel() {
   }, []);
 
   useEffect(() => {
-    refreshData();
     initLibrary().then(refreshData);
     initTemplates().then(refreshData);
     const onFocus = () => refreshData();
