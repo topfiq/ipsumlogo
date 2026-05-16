@@ -13,23 +13,31 @@ export function Toolbar() {
   const [brandName, setBrandName] = useState("Ipsumlogo");
 
   useEffect(() => {
-    const loadLogo = async () => {
+    const loadBranding = async () => {
+      let pubLogo = "";
+      let pubName = "";
       try {
         const res = await fetch("/settings.json");
         if (res.ok) {
           const data = await res.json();
-          if (data.logoUrl) setLogoUrl(data.logoUrl);
-          if (data.name) setBrandName(data.name);
+          pubLogo = data.logoUrl || "";
+          pubName = data.name || "";
         }
       } catch { /* */ }
+
       const raw = localStorage.getItem("ipsumlogo_admin");
+      let localLogo = "";
+      let localName = "";
       if (raw) {
-        try { const p = JSON.parse(raw); if (!logoUrl && p.logoUrl) setLogoUrl(p.logoUrl); } catch { /* */ }
+        try { const p = JSON.parse(raw); localLogo = p.logoUrl || ""; localName = p.name || ""; } catch { /* */ }
       }
+
+      setLogoUrl(pubLogo || localLogo);
+      setBrandName(pubName || localName || "Ipsumlogo");
     };
-    loadLogo();
-    window.addEventListener("focus", loadLogo);
-    return () => { window.removeEventListener("focus", loadLogo); };
+    loadBranding();
+    window.addEventListener("focus", loadBranding);
+    return () => { window.removeEventListener("focus", loadBranding); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
