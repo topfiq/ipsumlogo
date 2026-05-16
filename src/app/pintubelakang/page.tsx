@@ -2,11 +2,11 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { getLibrary, addToLibrary, removeFromLibrary, exportLibraryJson, importLibraryJson } from "@/lib/library";
-import { getTemplates, addTemplate, removeTemplate } from "@/lib/templates";
+import { loadLibrary, getLibrary, addToLibrary, removeFromLibrary, exportLibraryJson, importLibraryJson } from "@/lib/library";
+import { loadTemplates, getTemplates, addTemplate, removeTemplate } from "@/lib/templates";
 import { sanitizeSvg, isValidSvg } from "@/lib/svg-sanitizer";
 import { loadSVGFromString, Group, type FabricObject } from "fabric";
 import type { LibraryShape, LogoTemplate } from "@/types";
@@ -70,32 +70,33 @@ export default function AdminPage() {
     return getAdminProfile();
   });
 
-  const handlePasswordSubmit = () => {
-    const p = getAdminProfile();
-    if (password === p.password) {
-      const code = generateOtpCode();
-      setCurrentOtp(code);
-      setStep("otp");
-      setError("");
-      sendOtp(code, p);
-    } else setError("Incorrect password");
-  };
-
-  const sendOtp = async (code: string, p: AdminProfile) => {
-    if (p.onesenderUrl && p.onesenderKey && phoneNumber) {
-      const result = await sendOtpViaOnesender(phoneNumber, code, p.onesenderUrl, p.onesenderKey);
-      if (!result.success) setError(`Failed to send OTP: ${result.error}`);
-    } else if (!p.onesenderUrl) {
-      simulateSendOtp(phoneNumber || "admin", code);
-      setError("OTP: " + code + " (Onesender not configured — showing code for debug)");
-    } else {
-      setError("Enter phone number in Security tab to send OTP via WhatsApp");
-    }
+  const handlePasswordSubmit = async () => {
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        // Fetch OTP from server
+        const otpRes = await fetch("/api/settings");
+        const settings = await otpRes.json();
+        const code = settings.admin_otp || generateOtpCode();
+        setCurrentOtp(code);
+        setStep("otp");
+        setError("");
+        if (profile.onesenderUrl && profile.onesenderKey && phoneNumber) {
+          const result = await sendOtpViaOnesender(phoneNumber, code, profile.onesenderUrl, profile.onesenderKey);
+          if (!result.success) setError(`OTP send failed: ${result.error}`);
+        } else {
+          setError("OTP: " + code + " (debug — enter this code)");
+        }
+      } else setError("Incorrect password");
+    } catch { setError("Server error — check connection"); }
   };
 
   const handleOtpSubmit = () => {
-    const p = getAdminProfile();
-    if (otpInput === currentOtp || otpInput === p.otpCode) { setStep("done"); setError(""); setCurrentOtp(""); }
+    if (otpInput === currentOtp) { setStep("done"); setError(""); setCurrentOtp(""); }
     else setError("Incorrect verification code");
   };
 
@@ -164,8 +165,16 @@ function AdminDashboard({ profile, onLogout, onProfileChange }: {
   profile: AdminProfile; onLogout: () => void; onProfileChange: (p: AdminProfile) => void;
 }) {
   const [tab, setTab] = useState<AdminTab>("dashboard");
-  const [shapes, setShapes] = useState<LibraryShape[]>(() => getLibrary());
-  const refreshShapes = useCallback(() => setShapes(getLibrary()), []);
+  const [shapes, setShapes] = useState<LibraryShape[]>([]);
+  const [templates, setTemplates] = useState<LogoTemplate[]>([]);
+
+  useEffect(() => {
+    loadLibrary().then(setShapes);
+    loadTemplates().then(setTemplates);
+  }, []);
+
+  const refreshShapes = useCallback(() => { loadLibrary().then(setShapes); }, []);
+  const refreshTemplates = useCallback(() => { loadTemplates().then(setTemplates); }, []);
 
   const tabs: Array<{ id: AdminTab; icon: React.ReactNode; label: string }> = [
     { id: "dashboard", icon: <LayoutDashboard size={14} />, label: "Dashboard" },
@@ -238,38 +247,9 @@ function DashboardTab({ shapes, profile }: { shapes: LibraryShape[]; profile: Ad
       </div>
 
       <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-4 mt-4">
-        <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] mb-2 uppercase tracking-[0.5px]">Publish to Users</h3>
-        <p className="text-xs text-[var(--color-text-muted)] leading-relaxed mb-3">
-          Data is stored locally. To share with all users, export the JSON files below, replace them in the repo, and redeploy.
-        </p>
-        <div className="flex gap-2 flex-wrap mb-2">
-          <Button variant="outline" size="sm" onClick={() => {
-            const json = exportLibraryJson();
-            const blob = new Blob([json], { type: "application/json" });
-            const a = document.createElement("a");
-            a.href = URL.createObjectURL(blob); a.download = "shapes.json"; a.click();
-            URL.revokeObjectURL(a.href);
-          }}><Download size={12} /> Shapes JSON</Button>
-          <Button variant="outline" size="sm" onClick={() => {
-            const json = JSON.stringify(getTemplates(), null, 2);
-            const blob = new Blob([json], { type: "application/json" });
-            const a = document.createElement("a");
-            a.href = URL.createObjectURL(blob); a.download = "templates.json"; a.click();
-            URL.revokeObjectURL(a.href);
-          }}><Download size={12} /> Templates JSON</Button>
-          <Button variant="outline" size="sm" onClick={() => {
-            const data = { name: profile.name || "Ipsumlogo", logoUrl: profile.logoUrl || "" };
-            const json = JSON.stringify(data, null, 2);
-            const blob = new Blob([json], { type: "application/json" });
-            const a = document.createElement("a");
-            a.href = URL.createObjectURL(blob); a.download = "settings.json"; a.click();
-            URL.revokeObjectURL(a.href);
-          }}><Download size={12} /> Settings JSON</Button>
-        </div>
-        <p className="text-[10px] text-[var(--color-text-muted)]">
-          <strong>Step 1:</strong> Export files above.<br />
-          <strong>Step 2:</strong> Replace in repo: <code className="text-[var(--color-accent)]">public/library/shapes.json</code>, <code className="text-[var(--color-accent)]">public/library/templates.json</code>, <code className="text-[var(--color-accent)]">public/settings.json</code><br />
-           <strong>Step 3:</strong> <code className="text-[var(--color-accent)]">git add . && git commit -m &quot;publish&quot; && git push</code> — Coolify auto-deploys. All users see the update.
+        <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] mb-2 uppercase tracking-[0.5px]">Database Status</h3>
+        <p className="text-xs text-[var(--color-text-muted)] leading-relaxed">
+          All data is stored in PostgreSQL. Changes are instantly shared with all users — no need to publish manually.
         </p>
       </div>
     </div>
@@ -294,15 +274,15 @@ function ShapesTab({ shapes, refresh }: { shapes: LibraryShape[]; refresh: () =>
   const [category, setCategory] = useState("Geometric");
   const [error, setError] = useState("");
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     setError("");
     const name = shapeName.trim() || "Unnamed Shape";
     let svgContent = svgPaste.trim();
     if (!svgContent) { setError("Paste or upload SVG"); return; }
     if (!isValidSvg(svgContent)) { setError("Invalid or unsafe SVG"); return; }
     svgContent = sanitizeSvg(svgContent);
-    addToLibrary({ name, category, svgContent });
-    setShapeName(""); setSvgPaste(""); refresh();
+    try { await addToLibrary({ name, category, svgContent }); setShapeName(""); setSvgPaste(""); refresh(); }
+    catch { setError("Failed to save — check server connection"); }
   };
 
   const handleExport = () => {
@@ -413,16 +393,15 @@ function TemplatesTab() {
     reader.readAsText(file);
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     setError("");
     if (!name.trim()) { setError("Enter a template name"); return; }
     const svg = svgPaste.trim();
     if (!svg) { setError("Upload or paste SVG code"); return; }
     if (!isValidSvg(svg)) { setError("Invalid or unsafe SVG"); return; }
     const clean = sanitizeSvg(svg);
-    addTemplate(name.trim(), svgPaste.trim(), clean);
-    setName(""); setSvgPaste("");
-    refresh();
+    try { await addTemplate(name.trim(), svg, clean); setName(""); setSvgPaste(""); refresh(); }
+    catch { setError("Failed to save — check server connection"); }
   };
 
   const handleLoadToCanvas = (tmpl: LogoTemplate) => {

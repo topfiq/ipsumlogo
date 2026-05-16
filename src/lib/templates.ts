@@ -1,38 +1,28 @@
 import type { LogoTemplate } from "@/types";
 
 let templatesCache: LogoTemplate[] | null = null;
-let publicLoaded = false;
 const isClient = typeof window !== "undefined";
 
 export async function loadTemplates(): Promise<LogoTemplate[]> {
-  if (templatesCache && publicLoaded) return templatesCache;
-
-  const allTemplates: LogoTemplate[] = [];
+  if (templatesCache) return templatesCache;
 
   try {
-    const res = await fetch("/library/templates.json");
+    const res = await fetch("/api/templates");
     if (res.ok) {
-      const publicData: LogoTemplate[] = await res.json();
-      allTemplates.push(...publicData);
+      templatesCache = await res.json() as LogoTemplate[];
+      return templatesCache;
     }
-  } catch { /* ignore */ }
-  publicLoaded = true;
+  } catch { /* */ }
 
   if (isClient) {
     const raw = localStorage.getItem("ipsumlogo_templates");
     if (raw) {
-      try {
-        const localData: LogoTemplate[] = JSON.parse(raw);
-        const publicIds = new Set(allTemplates.map((t) => t.id));
-        for (const t of localData) {
-          if (!publicIds.has(t.id)) allTemplates.push(t);
-        }
-      } catch { /* ignore */ }
+      try { templatesCache = JSON.parse(raw) as LogoTemplate[]; return templatesCache; } catch { /* */ }
     }
   }
 
-  templatesCache = allTemplates;
-  return allTemplates;
+  templatesCache = [];
+  return templatesCache;
 }
 
 export function getTemplates(): LogoTemplate[] {
@@ -40,23 +30,27 @@ export function getTemplates(): LogoTemplate[] {
 }
 
 export function saveTemplates(templates: LogoTemplate[]) {
-  if (!isClient) return;
   templatesCache = templates;
-  localStorage.setItem("ipsumlogo_templates", JSON.stringify(templates));
+  if (isClient) localStorage.setItem("ipsumlogo_templates", JSON.stringify(templates));
 }
 
-export function addTemplate(name: string, stateJson: string, previewSvg: string): LogoTemplate {
-  const templates = getTemplates();
-  const tmpl: LogoTemplate = { id: crypto.randomUUID(), name, state: stateJson, preview: previewSvg, createdAt: Date.now() };
-  templates.push(tmpl);
-  saveTemplates(templates);
-  return tmpl;
+export async function addTemplate(name: string, stateJson: string, previewSvg: string): Promise<LogoTemplate> {
+  const res = await fetch("/api/templates", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, state: stateJson, preview: previewSvg }),
+  });
+  if (!res.ok) throw new Error("Failed to add template");
+  const created = await res.json();
+  templatesCache = null;
+  return created;
 }
 
-export function removeTemplate(id: string) {
-  saveTemplates(getTemplates().filter((t) => t.id !== id));
+export async function removeTemplate(id: string) {
+  await fetch(`/api/templates/${id}`, { method: "DELETE" });
+  templatesCache = null;
 }
 
-export function initTemplates(): Promise<LogoTemplate[]> {
+export async function initTemplates(): Promise<LogoTemplate[]> {
   return loadTemplates();
 }

@@ -1,0 +1,29 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated"
+}
+
+model Shape {
+  id         String   @id @default(cuid())
+  name       String
+  category   String   @default("Geometric")
+  svgContent String
+  createdAt  DateTime @default(now())
+}
+
+model Template {
+  id        String   @id @default(cuid())
+  name      String
+  state     String
+  preview   String
+  createdAt DateTime @default(now())
+}
+
+model Setting {
+  key   String @id
+  value String
+}

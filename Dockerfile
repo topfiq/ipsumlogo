@@ -7,15 +7,22 @@ COPY package.json package-lock.json ./
 RUN npm ci --include=dev --prefer-offline 2>&1 || npm install --include=dev 2>&1 || npm install --include=dev --registry https://registry.npmmirror.com
 
 COPY . .
+RUN npx prisma generate
 RUN npm run build
 
-FROM nginx:1.27-alpine AS runner
+FROM node:20-alpine AS runner
+WORKDIR /app
 
-COPY --from=builder /app/out /usr/share/nginx/html
+ENV NODE_ENV=production
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY security-headers.conf /etc/nginx/conf.d/security-headers.conf
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/package-lock.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/next.config.ts ./
 
-EXPOSE 80
+EXPOSE 3000
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["npm", "start"]

@@ -1,53 +1,29 @@
 import type { LibraryShape } from "@/types";
 
 let libraryCache: LibraryShape[] | null = null;
-let publicShapesLoaded = false;
 const isClient = typeof window !== "undefined";
 
-export function getDefaultShapes(): LibraryShape[] {
-  return libraryCache || [];
-}
-
 export async function loadLibrary(): Promise<LibraryShape[]> {
-  if (libraryCache && publicShapesLoaded) return libraryCache;
+  if (libraryCache) return libraryCache;
 
-  const allShapes: LibraryShape[] = [];
-
-  // 1. Load public published shapes from server
   try {
-    const url = "/library/shapes.json";
-    const res = await fetch(url);
+    const res = await fetch("/api/shapes");
     if (res.ok) {
-      const publicShapes: LibraryShape[] = await res.json();
-      allShapes.push(...publicShapes);
+      libraryCache = await res.json() as LibraryShape[];
+      return libraryCache;
     }
-  } catch { /* ignore network errors */ }
-  publicShapesLoaded = true;
+  } catch { /* network error — fall through */ }
 
-  // 2. Load admin draft shapes from localStorage (not yet published)
+  // Fallback to localStorage
   if (isClient) {
     const raw = localStorage.getItem("ipsumlogo_library");
     if (raw) {
-      try {
-        const localShapes: LibraryShape[] = JSON.parse(raw);
-        const publicIds = new Set(allShapes.map((s) => s.id));
-        for (const shape of localShapes) {
-          if (!publicIds.has(shape.id)) allShapes.push(shape);
-        }
-      } catch { /* ignore */ }
+      try { libraryCache = JSON.parse(raw) as LibraryShape[]; return libraryCache; } catch { /* */ }
     }
   }
 
-  // 3. If still empty, use bundled defaults
-  if (allShapes.length === 0 && isClient) {
-    try {
-      const mod = await import("@/data/default-shapes.json");
-      allShapes.push(...(mod.default as LibraryShape[]));
-    } catch { /* ignore */ }
-  }
-
-  libraryCache = allShapes;
-  return allShapes;
+  libraryCache = [];
+  return libraryCache;
 }
 
 export function getLibrary(): LibraryShape[] {
@@ -55,22 +31,25 @@ export function getLibrary(): LibraryShape[] {
 }
 
 export function saveLibrary(shapes: LibraryShape[]) {
-  if (!isClient) return;
   libraryCache = shapes;
-  localStorage.setItem("ipsumlogo_library", JSON.stringify(shapes));
+  if (isClient) localStorage.setItem("ipsumlogo_library", JSON.stringify(shapes));
 }
 
-export function addToLibrary(shape: Omit<LibraryShape, "id" | "createdAt">) {
-  const library = getLibrary();
-  const newShape: LibraryShape = { ...shape, id: crypto.randomUUID(), createdAt: Date.now() };
-  library.push(newShape);
-  saveLibrary(library);
-  return newShape;
+export async function addToLibrary(shape: Omit<LibraryShape, "id" | "createdAt">): Promise<LibraryShape> {
+  const res = await fetch("/api/shapes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(shape),
+  });
+  if (!res.ok) throw new Error("Failed to add shape");
+  const created = await res.json() as LibraryShape;
+  libraryCache = null; // invalidate cache
+  return created;
 }
 
-export function removeFromLibrary(id: string) {
-  const library = getLibrary().filter((s) => s.id !== id);
-  saveLibrary(library);
+export async function removeFromLibrary(id: string) {
+  await fetch(`/api/shapes/${id}`, { method: "DELETE" });
+  libraryCache = null;
 }
 
 export function exportLibraryJson(): string {
@@ -86,6 +65,6 @@ export function importLibraryJson(jsonString: string): boolean {
   } catch { return false; }
 }
 
-export function initLibrary(): Promise<LibraryShape[]> {
+export async function initLibrary(): Promise<LibraryShape[]> {
   return loadLibrary();
 }
