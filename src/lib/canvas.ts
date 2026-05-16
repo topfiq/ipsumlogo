@@ -7,12 +7,12 @@ import {
   Polygon,
   Group,
   IText,
-  Textbox,
+  FabricObject,
   Point,
   loadSVGFromString,
   type Canvas as ICanvas,
-  type FabricObject,
 } from "fabric";
+import type { FabricObject as IFabricObject } from "fabric";
 
 let canvasInstance: ICanvas | null = null;
 let isPanning = false;
@@ -33,6 +33,20 @@ export function initCanvas(
     selection: true,
     preserveObjectStacking: true,
   });
+
+  // Larger white selection handles
+  canvasInstance.selectionColor = "rgba(99, 102, 241, 0.15)";
+  canvasInstance.selectionBorderColor = "rgba(99, 102, 241, 0.8)";
+  canvasInstance.selectionLineWidth = 2;
+
+  FabricObject.prototype.cornerSize = 12;
+  FabricObject.prototype.cornerColor = "#ffffff";
+  FabricObject.prototype.cornerStrokeColor = "#6366f1";
+  FabricObject.prototype.cornerStyle = "circle";
+  FabricObject.prototype.transparentCorners = false;
+  FabricObject.prototype.padding = 6;
+  FabricObject.prototype.borderColor = "#6366f1";
+  FabricObject.prototype.borderScaleFactor = 1.5;
 
   setupCanvasEvents(canvasInstance);
 
