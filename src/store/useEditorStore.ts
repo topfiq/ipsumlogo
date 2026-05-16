@@ -116,7 +116,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       return;
     }
     const isGroup = active.type === "activeSelection" || active.type === "group";
-    const isText = active.type === "textbox" || active.type === "text";
+    const isText = active.type === "textbox" || active.type === "text" || active.type === "itext";
 
     const shape = active as unknown as Record<string, unknown>;
     const w = (shape.width as number) || 0;
@@ -192,7 +192,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     const obj = canvas.getActiveObject();
     if (!obj) return;
     // Skip if it's a text object (handled by updateText)
-    if (obj.type === "textbox" || obj.type === "text") return;
+    if (obj.type === "textbox" || obj.type === "text" || obj.type === "itext") return;
 
     if (props.fill !== undefined) obj.set("fill", props.fill);
     if (props.stroke !== undefined) obj.set("stroke", props.stroke);
@@ -213,7 +213,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     const canvas = getCanvas();
     if (!canvas) return;
     const obj = canvas.getActiveObject() as unknown as Record<string, unknown> & Textbox;
-    if (!obj || (obj.type !== "textbox" && obj.type !== "text")) return;
+    if (!obj || (obj.type !== "textbox" && obj.type !== "text" && obj.type !== "itext")) return;
 
     if (props.content !== undefined) obj.set("text", props.content);
     if (props.fontFamily !== undefined) obj.set("fontFamily", props.fontFamily);
@@ -314,7 +314,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     );
     const layers: Layer[] = objects.map((obj: FabricObject) => ({
       id: ((obj as unknown as { id?: string }).id) || crypto.randomUUID(),
-      name: obj.type === "textbox" || obj.type === "text"
+      name: obj.type === "textbox" || obj.type === "text" || obj.type === "itext"
         ? ((obj as unknown as { text?: string }).text || "").slice(0, 20) || "Text"
         : obj.type || "Shape",
       type: mapFabricType(obj.type || ""),
@@ -432,7 +432,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
 function mapFabricType(type: string): Layer["type"] {
   const map: Record<string, Layer["type"]> = {
     rect: "rect", circle: "circle", triangle: "triangle",
-    line: "line", polygon: "star", textbox: "text", text: "text",
+    line: "line", polygon: "star", textbox: "text", text: "text", itext: "text",
   };
   return map[type] || "rect";
 }
