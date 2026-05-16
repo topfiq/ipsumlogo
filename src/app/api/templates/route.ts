@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const templates = await prisma.template.findMany({ orderBy: { createdAt: "asc" } });
+    const templates = await prisma!.template.findMany({ orderBy: { createdAt: "asc" } });
     return NextResponse.json(templates);
   } catch (e) {
     console.error("[templates] GET error:", e);
@@ -14,7 +14,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const template = await prisma.template.create({
+    const template = await prisma!.template.create({
       data: {
         name: body.name || "Unnamed",
         state: body.state,
@@ -27,3 +27,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Database error" }, { status: 500 });
   }
 }
+

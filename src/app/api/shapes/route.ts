@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const shapes = await prisma.shape.findMany({ orderBy: { createdAt: "asc" } });
+    const shapes = await prisma!.shape.findMany({ orderBy: { createdAt: "asc" } });
     return NextResponse.json(shapes);
   } catch (e) {
     console.error("[shapes] GET error:", e);
@@ -14,7 +14,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const shape = await prisma.shape.create({
+    const shape = await prisma!.shape.create({
       data: {
         name: body.name || "Unnamed",
         category: body.category || "Geometric",
@@ -27,3 +27,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Database error" }, { status: 500 });
   }
 }
+

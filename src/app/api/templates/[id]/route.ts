@@ -7,7 +7,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    await prisma.template.delete({ where: { id } });
+    await prisma!.template.delete({ where: { id } });
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("[templates] DELETE error:", e);

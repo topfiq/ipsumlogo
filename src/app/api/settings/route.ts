@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const rows = await prisma.setting.findMany();
+    const rows = await prisma!.setting.findMany();
     const settings: Record<string, string> = {};
     rows.forEach((r) => { settings[r.key] = r.value; });
     return NextResponse.json(settings);
@@ -17,7 +17,7 @@ export async function PUT(request: Request) {
   try {
     const body = await request.json() as Record<string, string>;
     for (const [key, value] of Object.entries(body)) {
-      await prisma.setting.upsert({
+      await prisma!.setting.upsert({
         where: { key },
         update: { value },
         create: { key, value },
@@ -29,3 +29,4 @@ export async function PUT(request: Request) {
     return NextResponse.json({ ok: false, error: "Database error" }, { status: 500 });
   }
 }
+

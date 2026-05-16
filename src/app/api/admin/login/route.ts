@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   } catch { return NextResponse.json({ ok: false, error: "Invalid request" }, { status: 400 }); }
 
   try {
-    const row = await prisma.setting.findUnique({ where: { key: "admin_password" } });
+    const row = await prisma!.setting.findUnique({ where: { key: "admin_password" } });
     const valid = row?.value || "ipsum2025";
     if (password === valid) {
       return NextResponse.json({ ok: true });
@@ -23,3 +23,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Server error — try again later" }, { status: 500 });
   }
 }
+

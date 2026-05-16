@@ -7,7 +7,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    await prisma.shape.delete({ where: { id } });
+    await prisma!.shape.delete({ where: { id } });
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("[shapes] DELETE error:", e);
